@@ -6,9 +6,12 @@ import android.app.NotificationManager
 import android.app.Service
 import android.content.Intent
 import android.net.Uri
+import android.os.BatteryManager
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
+import android.provider.AlarmClock
+import android.provider.Settings
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
@@ -84,7 +87,6 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
                 val matches = results
                     ?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
                     .orEmpty()
-
                 val text = matches.firstOrNull().orEmpty()
 
                 if (text.isBlank()) {
@@ -96,10 +98,7 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
         })
 
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-            putExtra(
-                RecognizerIntent.EXTRA_LANGUAGE_MODEL,
-                RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
-            )
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
             putExtra(RecognizerIntent.EXTRA_LANGUAGE, language)
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, language)
             putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 10)
@@ -116,7 +115,7 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
 
     private fun handleVoice(text: String, matches: List<String>) {
         val allText = (listOf(text) + matches).joinToString(" ")
-        val command = allText.lowercase(Locale.getDefault()).trim()
+        val command = normalize(allText)
 
         if (command.isBlank()) {
             handler.postDelayed({ startRecognition() }, 400)
@@ -124,9 +123,14 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
         }
 
         if (!waitingForCommand && isWakePhrase(command)) {
-            waitingForCommand = true
-            speak("জি, বলুন")
-            waitForTtsThenListen()
+            val remaining = removeWakePhrase(command)
+            if (remaining.isNotBlank()) {
+                executeCommand(remaining)
+            } else {
+                waitingForCommand = true
+                speak("জি, বলুন")
+                waitForTtsThenListen()
+            }
             return
         }
 
@@ -139,9 +143,8 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
         handler.postDelayed({ startRecognition() }, 400)
     }
 
-    private fun isWakePhrase(command: String): Boolean {
-        val normalized = command
-            .lowercase(Locale.getDefault())
+    private fun normalize(value: String): String {
+        return value.lowercase(Locale.getDefault())
             .replace("৪", "4")
             .replace("ভি ফোর", "v4")
             .replace("ভি ৪", "v4")
@@ -152,8 +155,6 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
             .replace("অ্যাক্টিভ", "active")
             .replace("এক্টিভ", "active")
             .replace("একটিভ", "active")
-            .replace("একটিভ", "active")
-            .replace("এক্টিভ", "active")
             .replace("অ্যাক্টিভেট", "active")
             .replace("অ্যাক্টিভেটেড", "active")
             .replace("active v for", "active v4")
@@ -161,13 +162,24 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
             .replace("active be four", "active v4")
             .replace("active b4", "active v4")
             .replace("active v", "active v4")
-            .replace(Regex("[^a-z0-9]+"), " ")
+            .replace(Regex("\s+"), " ")
             .trim()
+    }
 
-        return normalized.contains("active v4") ||
-            normalized.contains("activev4") ||
-            normalized.contains("active four") ||
-            normalized.contains("active 4")
+    private fun isWakePhrase(command: String): Boolean {
+        return command.contains("active v4") ||
+            command.contains("activev4") ||
+            command.contains("active four") ||
+            command.contains("active 4")
+    }
+
+    private fun removeWakePhrase(command: String): String {
+        return command
+            .replace("active v4", "")
+            .replace("activev4", "")
+            .replace("active four", "")
+            .replace("active 4", "")
+            .trim()
     }
 
     private fun waitForTtsThenListen() {
@@ -175,49 +187,186 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
             handler.postDelayed({ startRecognition() }, 1200)
             return
         }
-
         handler.postDelayed({ startRecognition() }, 1800)
     }
 
     private fun executeCommand(original: String) {
-        val command = original.lowercase(Locale.getDefault())
+        val command = normalize(original)
+
         when {
             command.contains("সময়") || command.contains("সময়") ||
                 command.contains("কয়টা বাজে") || command.contains("কয়টা বাজে") ||
                 command.contains("ঘড়ি") || command.contains("ঘড়ি") ||
-                command.contains("time") -> {
+                command.contains("time") || command.contains("what time") -> {
                 val now = SimpleDateFormat("hh:mm a", Locale.getDefault()).format(Date())
                 speak("এখন সময় $now")
             }
+
             command.contains("তারিখ") || command.contains("আজ কত তারিখ") ||
                 command.contains("আজকের তারিখ") || command.contains("date") ||
                 command.contains("today") -> {
                 speak("আজ " + SimpleDateFormat("dd MMMM yyyy", Locale.getDefault()).format(Date()))
             }
-            command.contains("youtube") || command.contains("ইউটিউব") ->
-                openUrl("https://www.youtube.com", "ইউটিউব খুলছি")
-            command.contains("google") || command.contains("গুগল") ->
-                openUrl("https://www.google.com", "গুগল খুলছি")
+
+            command.contains("ব্যাটারি") || command.contains("battery") ||
+                command.contains("চার্জ কত") || command.contains("charge") -> {
+                val level = (getSystemService(BATTERY_SERVICE) as BatteryManager)
+                    .getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
+                speak("ব্যাটারি $level শতাংশ")
+            }
+
+            command.contains("wifi") || command.contains("ওয়াইফাই") ||
+                command.contains("ওয়াইফাই") -> {
+                speak("ওয়াইফাই সেটিংস খুলছি")
+                startActivity(Intent(Settings.ACTION_WIFI_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            }
+
+            command.contains("bluetooth") || command.contains("ব্লুটুথ") -> {
+                speak("ব্লুটুথ সেটিংস খুলছি")
+                startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            }
+
+            command.contains("camera") || command.contains("ক্যামেরা") -> {
+                speak("ক্যামেরা খুলছি")
+                startActivity(Intent("android.media.action.IMAGE_CAPTURE").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            }
+
+            command.contains("settings") || command.contains("সেটিংস") -> {
+                speak("সেটিংস খুলছি")
+                startActivity(Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            }
+
+            command.contains("alarm") || command.contains("অ্যালার্ম") ||
+                command.contains("এলার্ম") -> {
+                speak("অ্যালার্ম সেট করার স্ক্রিন খুলছি")
+                startActivity(Intent(AlarmClock.ACTION_SET_ALARM).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            }
+
+            command.contains("whatsapp") || command.contains("হোয়াটসঅ্যাপ") ||
+                command.contains("হোয়াটসঅ্যাপ") -> openApp("com.whatsapp", "WhatsApp")
+
+            command.contains("facebook") || command.contains("ফেসবুক") ->
+                openApp("com.facebook.katana", "Facebook")
+
+            command.contains("chrome") || command.contains("ক্রোম") ->
+                openApp("com.android.chrome", "Chrome")
+
+            command.contains("youtube") || command.contains("ইউটিউব") -> {
+                val search = extractAfter(command, listOf("youtube", "ইউটিউব"))
+                if (search.isBlank() || search == "খুলো" || search == "খোল" || search == "open") {
+                    openUrl("https://www.youtube.com", "ইউটিউব খুলছি")
+                } else {
+                    openUrl(
+                        "https://www.youtube.com/results?search_query=" + Uri.encode(search),
+                        "ইউটিউবে $search খুঁজে দিচ্ছি"
+                    )
+                }
+            }
+
+            command.contains("google") || command.contains("গুগল") -> {
+                val search = extractAfter(command, listOf("google", "গুগল"))
+                if (search.isBlank() || search == "খুলো" || search == "খোল" || search == "open") {
+                    openUrl("https://www.google.com", "গুগল খুলছি")
+                } else {
+                    openUrl(
+                        "https://www.google.com/search?q=" + Uri.encode(search),
+                        "গুগলে $search খুঁজে দিচ্ছি"
+                    )
+                }
+            }
+
+            command.startsWith("search ") || command.startsWith("খুঁজে ") ||
+                command.startsWith("সার্চ ") -> {
+                val query = command
+                    .removePrefix("search ")
+                    .removePrefix("খুঁজে ")
+                    .removePrefix("সার্চ ")
+                    .trim()
+                if (query.isNotBlank()) {
+                    openUrl(
+                        "https://www.google.com/search?q=" + Uri.encode(query),
+                        "গুগলে খুঁজে দিচ্ছি"
+                    )
+                } else {
+                    speak("কী খুঁজব বলুন")
+                }
+            }
+
             command.contains("গান") || command.contains("music") ||
                 command.contains("মিউজিক") || command.contains("ভিডিও") ||
-                command.contains("video") ->
-                openUrl(
-                    "https://www.youtube.com/results?search_query=" + Uri.encode(original),
-                    "ইউটিউবে খুঁজে দিচ্ছি"
-                )
+                command.contains("video") || command.contains("play ") -> {
+                val query = command
+                    .replace("গান", "")
+                    .replace("music", "")
+                    .replace("মিউজিক", "")
+                    .replace("ভিডিও", "")
+                    .replace("video", "")
+                    .replace("play", "")
+                    .trim()
+                if (query.isBlank()) {
+                    speak("কোন গান বা ভিডিও চালাব?")
+                } else {
+                    openUrl(
+                        "https://www.youtube.com/results?search_query=" + Uri.encode(query),
+                        "ইউটিউবে $query খুঁজে দিচ্ছি"
+                    )
+                }
+            }
+
             command.contains("হ্যালো") || command.contains("hello") ||
-                command.contains("হাই") || command.contains("hi") ->
-                speak("হ্যালো! আমি V4।")
-            else ->
-                speak("দুঃখিত, এই কমান্ডটি এখনো বুঝতে পারিনি।")
+                command.contains("হাই") || command.contains("hi") -> {
+                speak("হ্যালো! আমি V4। কী করতে পারি?")
+            }
+
+            command.contains("তোমার নাম") || command.contains("নাম কি") ||
+                command.contains("নাম কী") || command.contains("your name") -> {
+                speak("আমার নাম V4")
+            }
+
+            command.contains("কি করতে পারো") || command.contains("কী করতে পারো") ||
+                command.contains("what can you do") || command.contains("help") -> {
+                speak("আমি সময় ও তারিখ বলতে, ব্যাটারি জানাতে, ইউটিউব ও গুগল খুলতে, অ্যাপ খুলতে, ক্যামেরা ও সেটিংস চালু করতে এবং ভয়েস কমান্ড বুঝতে পারি।")
+            }
+
+            command.contains("কেমন আছ") || command.contains("কেমন আছেন") ||
+                command.contains("how are you") -> {
+                speak("আমি ভালো আছি। আপনার কমান্ডের জন্য প্রস্তুত।")
+            }
+
+            command.contains("ধন্যবাদ") || command.contains("thank you") ||
+                command.contains("thanks") -> speak("আপনাকেও ধন্যবাদ")
+
+            else -> speak("দুঃখিত, এই কমান্ডটি এখনো বুঝতে পারিনি।")
         }
+
+        handler.postDelayed({ startRecognition() }, 900)
+    }
+
+    private fun extractAfter(command: String, keys: List<String>): String {
+        for (key in keys) {
+            val index = command.indexOf(key)
+            if (index >= 0) {
+                return command.substring(index + key.length)
+                    .replace(Regex("^(খুলো|খোল|open|চালু করো|চালাও)\s*"), "")
+                    .trim()
+            }
+        }
+        return ""
     }
 
     private fun openUrl(url: String, message: String) {
         speak(message)
-        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        startActivity(intent)
+        startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+    }
+
+    private fun openApp(packageName: String, name: String) {
+        val intent = packageManager.getLaunchIntentForPackage(packageName)
+        if (intent != null) {
+            speak("$name খুলছি")
+            startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        } else {
+            speak("$name ফোনে ইনস্টল নেই")
+        }
     }
 
     private fun speak(text: String) {
@@ -230,14 +379,11 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
         if (status != TextToSpeech.SUCCESS) return
 
         ttsReady = true
-
         try {
             tts.language = Locale("bn", "BD")
         } catch (_: Exception) {
         }
 
-        // First try a Bengali female voice, then any female voice.
-        // The device's TTS engine decides which voices are actually installed.
         val voices = tts.voices.orEmpty()
         val femaleBengali = voices.firstOrNull {
             it.locale.language == "bn" &&
@@ -258,13 +404,11 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
 
         tts.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
             override fun onStart(utteranceId: String?) {}
-
             override fun onDone(utteranceId: String?) {
                 if (utteranceId == "V4_WAKE_REPLY" && waitingForCommand) {
                     handler.post { startRecognition() }
                 }
             }
-
             override fun onError(utteranceId: String?) {}
         })
     }

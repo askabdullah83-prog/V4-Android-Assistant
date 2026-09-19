@@ -13,6 +13,7 @@ import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
+import android.speech.tts.UtteranceProgressListener
 import androidx.core.app.NotificationCompat
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -74,21 +75,22 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
             override fun onBufferReceived(buffer: ByteArray?) {}
             override fun onEndOfSpeech() {}
             override fun onError(error: Int) {
-                handler.postDelayed({ startRecognition() }, 500)
+                handler.postDelayed({ startRecognition() }, 700)
             }
             override fun onPartialResults(partialResults: Bundle?) {}
             override fun onEvent(eventType: Int, params: Bundle?) {}
 
             override fun onResults(results: Bundle?) {
-                val text = results
+                val matches = results
                     ?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
-                    ?.firstOrNull()
                     .orEmpty()
+
+                val text = matches.firstOrNull().orEmpty()
 
                 if (text.isBlank()) {
                     handler.postDelayed({ startRecognition() }, 400)
                 } else {
-                    handleVoice(text)
+                    handleVoice(text, matches)
                 }
             }
         })
@@ -100,7 +102,7 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
             )
             putExtra(RecognizerIntent.EXTRA_LANGUAGE, language)
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, language)
-            putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 5)
+            putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 10)
             putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
             putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, packageName)
         }
@@ -112,8 +114,9 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
         }
     }
 
-    private fun handleVoice(text: String) {
-        val command = text.lowercase(Locale.getDefault()).trim()
+    private fun handleVoice(text: String, matches: List<String>) {
+        val allText = (listOf(text) + matches).joinToString(" ")
+        val command = allText.lowercase(Locale.getDefault()).trim()
 
         if (command.isBlank()) {
             handler.postDelayed({ startRecognition() }, 400)
@@ -123,15 +126,14 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
         if (!waitingForCommand && isWakePhrase(command)) {
             waitingForCommand = true
             speak("জি, বলুন")
-            // Wait for the female TTS reply to finish before reopening the microphone.
-            handler.postDelayed({ startRecognition() }, 1300)
+            waitForTtsThenListen()
             return
         }
 
         if (waitingForCommand) {
             waitingForCommand = false
             executeCommand(text)
-            handler.postDelayed({ startRecognition() }, 1000)
+            handler.postDelayed({ startRecognition() }, 900)
             return
         }
 
@@ -140,18 +142,42 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
 
     private fun isWakePhrase(command: String): Boolean {
         val normalized = command
+            .lowercase(Locale.getDefault())
             .replace("৪", "4")
             .replace("ভি ফোর", "v4")
             .replace("ভি ৪", "v4")
+            .replace("ভি চার", "v4")
             .replace("v four", "v4")
             .replace("v 4", "v4")
             .replace("অ্যাকটিভ", "active")
             .replace("অ্যাক্টিভ", "active")
             .replace("এক্টিভ", "active")
             .replace("একটিভ", "active")
+            .replace("একটিভ", "active")
+            .replace("এক্টিভ", "active")
+            .replace("অ্যাক্টিভেট", "active")
+            .replace("অ্যাক্টিভেটেড", "active")
+            .replace("active v for", "active v4")
+            .replace("active before", "active v4")
+            .replace("active be four", "active v4")
+            .replace("active b4", "active v4")
+            .replace("active v", "active v4")
+            .replace(Regex("[^a-z0-9]+"), " ")
             .trim()
 
-        return normalized.contains("active v4") || normalized.contains("activev4")
+        return normalized.contains("active v4") ||
+            normalized.contains("activev4") ||
+            normalized.contains("active four") ||
+            normalized.contains("active 4")
+    }
+
+    private fun waitForTtsThenListen() {
+        if (!ttsReady) {
+            handler.postDelayed({ startRecognition() }, 1200)
+            return
+        }
+
+        handler.postDelayed({ startRecognition() }, 1800)
     }
 
     private fun executeCommand(original: String) {
@@ -200,7 +226,7 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
 
     private fun speak(text: String) {
         if (!ttsReady) return
-        tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, "V4_WAKE_REPLY")
+        tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, "V4_REPLY")
     }
 
     override fun onInit(status: Int) {
@@ -208,9 +234,13 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
 
         ttsReady = true
 
-        // Prefer a Bengali female voice. If the device has no Bengali female
-        // voice, use any available female Bengali voice; otherwise fall back
-        // to the device's Bengali voice.
+        try {
+            tts.language = Locale("bn", "BD")
+        } catch (_: Exception) {
+        }
+
+        // First try a Bengali female voice, then any female voice.
+        // The device's TTS engine decides which voices are actually installed.
         val voices = tts.voices.orEmpty()
         val femaleBengali = voices.firstOrNull {
             it.locale.language == "bn" &&
@@ -218,18 +248,28 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
                  it.name.contains("fem", true) ||
                  it.name.contains("woman", true))
         }
-        val anyBengali = voices.firstOrNull { it.locale.language == "bn" }
-
-        try {
-            tts.voice = femaleBengali ?: anyBengali ?: tts.voice
-        } catch (_: Exception) {
-            tts.language = Locale("bn", "BD")
+        val femaleAny = voices.firstOrNull {
+            it.name.contains("female", true) ||
+                it.name.contains("fem", true) ||
+                it.name.contains("woman", true)
         }
 
         try {
-            tts.language = Locale("bn", "BD")
+            tts.voice = femaleBengali ?: femaleAny ?: tts.voice
         } catch (_: Exception) {
         }
+
+        tts.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
+            override fun onStart(utteranceId: String?) {}
+
+            override fun onDone(utteranceId: String?) {
+                if (utteranceId == "V4_WAKE_REPLY" && waitingForCommand) {
+                    handler.post { startRecognition() }
+                }
+            }
+
+            override fun onError(utteranceId: String?) {}
+        })
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int = START_STICKY

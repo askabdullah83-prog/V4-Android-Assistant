@@ -3,6 +3,7 @@ package com.example.v4
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Bundle
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
@@ -28,7 +29,6 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
         statusText = findViewById(R.id.statusText)
         listenButton = findViewById(R.id.listenButton)
         languageButton = findViewById(R.id.languageButton)
@@ -42,34 +42,21 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         }
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
-            != PackageManager.PERMISSION_GRANTED
-        ) {
-            ActivityCompat.requestPermissions(
-                this,
-                arrayOf(Manifest.permission.RECORD_AUDIO),
-                10
-            )
+            != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.RECORD_AUDIO), 10)
         }
     }
 
     private fun startListening() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
-            != PackageManager.PERMISSION_GRANTED
-        ) {
-            ActivityCompat.requestPermissions(
-                this,
-                arrayOf(Manifest.permission.RECORD_AUDIO),
-                10
-            )
+            != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.RECORD_AUDIO), 10)
             return
         }
 
         if (!SpeechRecognizer.isRecognitionAvailable(this)) {
             statusText.text = "Speech Recognition service পাওয়া যাচ্ছে না"
-            speak(if (language == "bn-BD")
-                "স্পিচ রিকগনিশন সার্ভিস পাওয়া যাচ্ছে না"
-            else
-                "Speech recognition service is not available")
+            speak(if (language == "bn-BD") "স্পিচ রিকগনিশন সার্ভিস পাওয়া যাচ্ছে না" else "Speech recognition service is not available")
             return
         }
 
@@ -77,28 +64,18 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         recognizer = SpeechRecognizer.createSpeechRecognizer(this)
 
         recognizer?.setRecognitionListener(object : RecognitionListener {
-            override fun onReadyForSpeech(params: Bundle?) {
-                statusText.text = "শুনছি..."
-            }
-
-            override fun onBeginningOfSpeech() {
-                statusText.text = "বলুন..."
-            }
-
+            override fun onReadyForSpeech(params: Bundle?) { statusText.text = "শুনছি..." }
+            override fun onBeginningOfSpeech() { statusText.text = "বলুন..." }
             override fun onRmsChanged(rmsdB: Float) {}
             override fun onBufferReceived(buffer: ByteArray?) {}
-
-            override fun onEndOfSpeech() {
-                statusText.text = "প্রসেস করছি..."
-            }
+            override fun onEndOfSpeech() { statusText.text = "প্রসেস করছি..." }
 
             override fun onError(error: Int) {
                 statusText.text = when (error) {
                     SpeechRecognizer.ERROR_AUDIO -> "অডিও সমস্যা"
                     SpeechRecognizer.ERROR_CLIENT -> "অ্যাপ থেকে রিকগনিশন শুরু করা যায়নি"
                     SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS -> "মাইক্রোফোন অনুমতি নেই"
-                    SpeechRecognizer.ERROR_NETWORK,
-                    SpeechRecognizer.ERROR_NETWORK_TIMEOUT -> "নেটওয়ার্ক সমস্যা"
+                    SpeechRecognizer.ERROR_NETWORK, SpeechRecognizer.ERROR_NETWORK_TIMEOUT -> "নেটওয়ার্ক সমস্যা"
                     SpeechRecognizer.ERROR_NO_MATCH -> "কথা বোঝা যায়নি, আবার বলুন"
                     SpeechRecognizer.ERROR_RECOGNIZER_BUSY -> "স্পিচ সার্ভিস ব্যস্ত, আবার চেষ্টা করুন"
                     SpeechRecognizer.ERROR_SERVER -> "স্পিচ সার্ভার সমস্যা"
@@ -108,18 +85,12 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             }
 
             override fun onResults(results: Bundle?) {
-                val text = results
-                    ?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
-                    ?.firstOrNull()
-                    .orEmpty()
-
+                val text = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
+                    ?.firstOrNull().orEmpty()
                 statusText.text = text.ifBlank {
                     if (language == "bn-BD") "কিছু শোনা যায়নি" else "Nothing heard"
                 }
-
-                if (text.isNotBlank()) {
-                    handleCommand(text.lowercase(Locale.getDefault()))
-                }
+                if (text.isNotBlank()) handleCommand(text.trim())
             }
 
             override fun onPartialResults(partialResults: Bundle?) {}
@@ -127,13 +98,10 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         })
 
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-            putExtra(
-                RecognizerIntent.EXTRA_LANGUAGE_MODEL,
-                RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
-            )
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
             putExtra(RecognizerIntent.EXTRA_LANGUAGE, language)
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, language)
-            putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 3)
+            putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 5)
             putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, false)
         }
 
@@ -141,34 +109,63 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         recognizer?.startListening(intent)
     }
 
-    private fun handleCommand(command: String) {
+    private fun handleCommand(originalCommand: String) {
+        val command = originalCommand.lowercase(Locale.getDefault()).trim()
+
         when {
-            command.contains("সময়") || command.contains("সময়") || command.contains("time") -> {
-                speak(SimpleDateFormat("hh:mm a", Locale.getDefault()).format(Date()))
+            command.contains("সময়") || command.contains("সময়") ||
+            command.contains("কয়টা বাজে") || command.contains("কয়টা বাজে") ||
+            command.contains("সময় কত") || command.contains("সময় কত") ||
+            command.contains("time") -> {
+                val now = SimpleDateFormat("hh:mm a", Locale.getDefault()).format(Date())
+                speak(if (language == "bn-BD") "এখন সময় $now" else "The time is $now")
             }
-            command.contains("তারিখ") || command.contains("date") -> {
-                speak(SimpleDateFormat("dd MMMM yyyy", Locale.getDefault()).format(Date()))
+
+            command.contains("তারিখ") || command.contains("আজ কত তারিখ") ||
+            command.contains("date") || command.contains("today") -> {
+                val today = SimpleDateFormat("dd MMMM yyyy", Locale.getDefault()).format(Date())
+                speak(if (language == "bn-BD") "আজ $today" else "Today is $today")
             }
+
             command.contains("youtube") || command.contains("ইউটিউব") -> {
-                startActivity(Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://www.youtube.com")))
                 speak(if (language == "bn-BD") "ইউটিউব খুলছি" else "Opening YouTube")
+                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://www.youtube.com")))
             }
+
             command.contains("google") || command.contains("গুগল") -> {
-                startActivity(Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://www.google.com")))
                 speak(if (language == "bn-BD") "গুগল খুলছি" else "Opening Google")
+                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://www.google.com")))
             }
-            command.contains("কল") || command.contains("call") -> {
-                speak(if (language == "bn-BD")
-                    "কল করার জন্য ডায়ালার খুলছি"
-                else
-                    "Opening the dialer")
+
+            command.contains("কল") || command.contains("ফোন কর") || command.contains("call") -> {
+                speak(if (language == "bn-BD") "কল করার জন্য ডায়ালার খুলছি" else "Opening the dialer")
                 startActivity(Intent(Intent.ACTION_DIAL))
             }
+
+            command.contains("হ্যালো") || command.contains("হাই") ||
+            command.contains("hello") || command.contains("hi") -> {
+                speak(if (language == "bn-BD") "হ্যালো! আমি V4। কী করতে পারি?" else "Hello! I am V4. How can I help?")
+            }
+
+            command.contains("তোমার নাম") || command.contains("নাম কি") ||
+            command.contains("নাম কী") || command.contains("your name") -> {
+                speak(if (language == "bn-BD") "আমার নাম V4" else "My name is V4")
+            }
+
+            command.contains("কেমন আছ") || command.contains("কেমন আছেন") ||
+            command.contains("how are you") -> {
+                speak(if (language == "bn-BD") "আমি ভালো আছি। ধন্যবাদ!" else "I am fine. Thank you!")
+            }
+
+            command.contains("ধন্যবাদ") || command.contains("thank you") ||
+            command.contains("thanks") -> {
+                speak(if (language == "bn-BD") "আপনাকেও ধন্যবাদ" else "You're welcome")
+            }
+
             else -> {
-                speak(if (language == "bn-BD")
-                    "আমি বুঝতে পারিনি, আবার বলুন"
-                else
-                    "I did not understand, please try again")
+                val queryUrl = "https://www.google.com/search?q=" + Uri.encode(originalCommand)
+                speak(if (language == "bn-BD") "এই বিষয়ে গুগলে খুঁজে দিচ্ছি" else "I will search Google for that")
+                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(queryUrl)))
             }
         }
     }
@@ -179,9 +176,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     }
 
     override fun onInit(status: Int) {
-        if (status == TextToSpeech.SUCCESS) {
-            tts.language = Locale("bn", "BD")
-        }
+        if (status == TextToSpeech.SUCCESS) tts.language = Locale("bn", "BD")
     }
 
     override fun onDestroy() {

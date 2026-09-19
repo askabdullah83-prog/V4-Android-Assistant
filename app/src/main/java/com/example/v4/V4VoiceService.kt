@@ -92,7 +92,7 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
                 if (text.isBlank()) {
                     handler.postDelayed({ startRecognition() }, 400)
                 } else {
-                    handleVoice(text, matches)
+                    handleVoice(text)
                 }
             }
         })
@@ -113,7 +113,7 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
         }
     }
 
-    private fun handleVoice(text: String, matches: List<String>) {
+    private fun handleVoice(text: String) {
         val command = normalize(text)
 
         if (command.isBlank()) {
@@ -161,7 +161,7 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
             .replace("active be four", "active v4")
             .replace("active b4", "active v4")
             .replace("active v", "active v4")
-            .replace(Regex("\s+"), " ")
+            .replace(Regex("\\s+"), " ")
             .trim()
     }
 

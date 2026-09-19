@@ -125,11 +125,11 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     private fun handleCommand(originalCommand: String) {
         val command = originalCommand.lowercase(Locale.getDefault()).trim()
         when {
-            command.contains("সময়") || command.contains("সময়") || command.contains("কয়টা বাজে") || command.contains("কয়টা বাজে") || command.contains("time") -> {
+            command.contains("সময়") || command.contains("সময়") || command.contains("কয়টা বাজে") || command.contains("কয়টা বাজে") || command.contains("ঘড়ি") || command.contains("ঘড়ি") || command.contains("time") -> {
                 val now = SimpleDateFormat("hh:mm a", Locale.getDefault()).format(Date())
                 speak(if (language == "bn-BD") "এখন সময় $now" else "The time is $now")
             }
-            command.contains("তারিখ") || command.contains("আজ কত তারিখ") || command.contains("date") || command.contains("today") -> {
+            command.contains("তারিখ") || command.contains("আজ কত তারিখ") || command.contains("আজকের তারিখ") || command.contains("date") || command.contains("today") -> {
                 val today = SimpleDateFormat("dd MMMM yyyy", Locale.getDefault()).format(Date())
                 speak(if (language == "bn-BD") "আজ $today" else "Today is $today")
             }
@@ -155,8 +155,8 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             }
             command.contains("youtube") || command.contains("ইউটিউব") -> openUrl("https://www.youtube.com", "ইউটিউব খুলছি", "Opening YouTube")
             command.contains("google") || command.contains("গুগল") -> openUrl("https://www.google.com", "গুগল খুলছি", "Opening Google")
-            command.contains("গান") || command.contains("music") || command.contains("মিউজিক") -> openSearch("music", "গান খুঁজে দিচ্ছি", "Searching music on YouTube")
-            command.contains("ভিডিও") || command.contains("video") -> openSearch("video", "ভিডিও খুঁজে দিচ্ছি", "Searching videos on YouTube")
+            command.contains("গান") || command.contains("music") || command.contains("মিউজিক") -> openSearch(originalCommand, "গান খুঁজে দিচ্ছি", "Searching music on YouTube")
+            command.contains("ভিডিও") || command.contains("video") -> openSearch(originalCommand, "ভিডিও খুঁজে দিচ্ছি", "Searching videos on YouTube")
             command.contains("ক্যামেরা") || command.contains("camera") -> { speak(if (language == "bn-BD") "ক্যামেরা খুলছি" else "Opening camera"); startActivity(Intent("android.media.action.IMAGE_CAPTURE")) }
             command.contains("সেটিংস") || command.contains("settings") -> startActivity(Intent(Settings.ACTION_SETTINGS))
             command.contains("whatsapp") || command.contains("হোয়াটসঅ্যাপ") || command.contains("হোয়াটসঅ্যাপ") -> openApp("com.whatsapp", "WhatsApp")
@@ -167,7 +167,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             command.contains("তোমার নাম") || command.contains("নাম কি") || command.contains("নাম কী") || command.contains("your name") -> speak(if (language == "bn-BD") "আমার নাম V4" else "My name is V4")
             command.contains("কেমন আছ") || command.contains("কেমন আছেন") || command.contains("how are you") -> speak(if (language == "bn-BD") "আমি ভালো আছি। ধন্যবাদ!" else "I am fine. Thank you!")
             command.contains("ধন্যবাদ") || command.contains("thank you") || command.contains("thanks") -> speak(if (language == "bn-BD") "আপনাকেও ধন্যবাদ" else "You are welcome")
-            else -> openSearch(originalCommand, "এই বিষয়ে গুগলে খুঁজে দিচ্ছি", "I will search Google for that")
+            else -> openGoogleSearch(originalCommand)
         }
     }
 

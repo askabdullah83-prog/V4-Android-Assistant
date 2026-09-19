@@ -133,7 +133,6 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
         if (waitingForCommand) {
             waitingForCommand = false
             executeCommand(text)
-            handler.postDelayed({ startRecognition() }, 900)
             return
         }
 
@@ -210,10 +209,7 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
                 command.contains("হাই") || command.contains("hi") ->
                 speak("হ্যালো! আমি V4।")
             else ->
-                openUrl(
-                    "https://www.google.com/search?q=" + Uri.encode(original),
-                    "এই বিষয়ে গুগলে খুঁজে দিচ্ছি"
-                )
+                speak("দুঃখিত, এই কমান্ডটি এখনো বুঝতে পারিনি।")
         }
     }
 
@@ -226,7 +222,8 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
 
     private fun speak(text: String) {
         if (!ttsReady) return
-        tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, "V4_REPLY")
+        val utteranceId = if (text == "জি, বলুন") "V4_WAKE_REPLY" else "V4_REPLY"
+        tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, utteranceId)
     }
 
     override fun onInit(status: Int) {

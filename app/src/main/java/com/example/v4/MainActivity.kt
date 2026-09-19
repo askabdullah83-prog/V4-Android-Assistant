@@ -52,6 +52,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             speak(if (language == "bn-BD") "বাংলা ভাষা চালু হয়েছে" else "English language enabled")
         }
         requestNeededPermissions()
+        startWakeServiceIfAllowed()
     }
 
     private fun requestNeededPermissions() {
@@ -59,7 +60,44 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         if (Build.VERSION.SDK_INT >= 33) permissions.add(Manifest.permission.POST_NOTIFICATIONS)
         if (Build.VERSION.SDK_INT >= 31) permissions.add(Manifest.permission.BLUETOOTH_CONNECT)
         val missing = permissions.filter { ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED }
-        if (missing.isNotEmpty()) ActivityCompat.requestPermissions(this, missing.toTypedArray(), 10)
+        if (missing.isNotEmpty()) {
+            ActivityCompat.requestPermissions(this, missing.toTypedArray(), 10)
+        } else {
+            startWakeServiceIfAllowed()
+        }
+    }
+
+    private fun startWakeServiceIfAllowed() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) return
+        try {
+            ContextCompat.startForegroundService(
+                this,
+                Intent(this, V4VoiceService::class.java).apply { action = V4VoiceService.ACTION_START }
+            )
+            wakeRunning = true
+            wakeButton.text = "⏹️ Active V4 বন্ধ করুন"
+            statusText.text = "Active V4 চালু — Home Screen বা অন্য App থেকেও বলুন"
+        } catch (_: Exception) {
+            statusText.text = "Active V4 চালু করা যায়নি"
+        }
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == 10 && grantResults.isNotEmpty() &&
+            grantResults[0] == PackageManager.PERMISSION_GRANTED
+        ) {
+            startWakeServiceIfAllowed()
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (!wakeRunning) startWakeServiceIfAllowed()
     }
 
     private fun toggleWakeService() {
@@ -73,7 +111,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             ContextCompat.startForegroundService(this, Intent(this, V4VoiceService::class.java).apply { action = V4VoiceService.ACTION_START })
             wakeRunning = true
             wakeButton.text = "⏹️ Active V4 বন্ধ করুন"
-            statusText.text = "Active V4 চালু — বলুন: Active V4"
+            statusText.text = "Active V4 চালু — Home Screen বা অন্য App থেকেও বলুন"
             speak(if (language == "bn-BD") "Active V4 চালু করেছি" else "Active V4 is on")
         }
     }
@@ -167,7 +205,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             command.contains("তোমার নাম") || command.contains("নাম কি") || command.contains("নাম কী") || command.contains("your name") -> speak(if (language == "bn-BD") "আমার নাম V4" else "My name is V4")
             command.contains("কেমন আছ") || command.contains("কেমন আছেন") || command.contains("how are you") -> speak(if (language == "bn-BD") "আমি ভালো আছি। ধন্যবাদ!" else "I am fine. Thank you!")
             command.contains("ধন্যবাদ") || command.contains("thank you") || command.contains("thanks") -> speak(if (language == "bn-BD") "আপনাকেও ধন্যবাদ" else "You are welcome")
-            else -> openGoogleSearch(originalCommand)
+            else -> speak(if (language == "bn-BD") "দুঃখিত, এই কমান্ডটি এখনো বুঝতে পারিনি।" else "Sorry, I do not understand that command yet.")
         }
     }
 

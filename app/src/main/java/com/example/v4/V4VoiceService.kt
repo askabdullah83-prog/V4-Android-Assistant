@@ -114,8 +114,7 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
     }
 
     private fun handleVoice(text: String, matches: List<String>) {
-        val allText = (listOf(text) + matches).joinToString(" ")
-        val command = normalize(allText)
+        val command = normalize(text)
 
         if (command.isBlank()) {
             handler.postDelayed({ startRecognition() }, 400)
@@ -347,7 +346,7 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
             val index = command.indexOf(key)
             if (index >= 0) {
                 return command.substring(index + key.length)
-                    .replace(Regex("^(খুলো|খোল|open|চালু করো|চালাও)\s*"), "")
+                    .replace(Regex("^(খুলো|খোল|open|চালু করো|চালাও)\\s*"), "")
                     .trim()
             }
         }

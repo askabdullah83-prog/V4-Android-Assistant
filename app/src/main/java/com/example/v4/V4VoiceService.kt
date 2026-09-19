@@ -99,16 +99,16 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
     private fun executeCommand(original: String) {
         val command = original.lowercase(Locale.getDefault())
         when {
-            command.contains("সময়") || command.contains("সময়") || command.contains("time") -> {
+            command.contains("সময়") || command.contains("সময়") || command.contains("কয়টা বাজে") || command.contains("কয়টা বাজে") || command.contains("ঘড়ি") || command.contains("ঘড়ি") || command.contains("time") -> {
                 val now = SimpleDateFormat("hh:mm a", Locale.getDefault()).format(Date())
                 speak("এখন সময় $now")
             }
-            command.contains("তারিখ") || command.contains("date") -> speak("আজ " + SimpleDateFormat("dd MMMM yyyy", Locale.getDefault()).format(Date()))
+            command.contains("তারিখ") || command.contains("আজ কত তারিখ") || command.contains("আজকের তারিখ") || command.contains("date") || command.contains("today") -> speak("আজ " + SimpleDateFormat("dd MMMM yyyy", Locale.getDefault()).format(Date()))
             command.contains("youtube") || command.contains("ইউটিউব") -> openUrl("https://www.youtube.com", "ইউটিউব খুলছি")
             command.contains("google") || command.contains("গুগল") -> openUrl("https://www.google.com", "গুগল খুলছি")
-            command.contains("গান") || command.contains("music") || command.contains("ভিডিও") || command.contains("video") -> openUrl("https://www.youtube.com/results?search_query=" + Uri.encode(original), "ইউটিউবে খুঁজে দিচ্ছি")
+            command.contains("গান") || command.contains("music") || command.contains("মিউজিক") || command.contains("ভিডিও") || command.contains("video") -> openUrl("https://www.youtube.com/results?search_query=" + Uri.encode(original), "ইউটিউবে খুঁজে দিচ্ছি")
             command.contains("হ্যালো") || command.contains("hello") || command.contains("হাই") || command.contains("hi") -> speak("হ্যালো! আমি V4।")
-            else -> openUrl("https://www.google.com/search?q=" + Uri.encode(original), "গুগলে খুঁজে দিচ্ছি")
+            else -> openUrl("https://www.google.com/search?q=" + Uri.encode(original), "এই বিষয়ে গুগলে খুঁজে দিচ্ছি")
         }
     }
 

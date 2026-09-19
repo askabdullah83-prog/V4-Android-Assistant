@@ -176,6 +176,12 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
     }
 
+    private fun openGoogleSearch(query: String) {
+        speak(if (language == "bn-BD") "এই বিষয়ে গুগলে খুঁজে দিচ্ছি" else "I will search Google for that")
+        val url = "https://www.google.com/search?q=" + Uri.encode(query)
+        startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+    }
+
     private fun openSearch(query: String, bn: String, en: String) {
         speak(if (language == "bn-BD") bn else en)
         val url = "https://www.youtube.com/results?search_query=" + Uri.encode(query)

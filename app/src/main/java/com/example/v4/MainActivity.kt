@@ -75,10 +75,10 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 Intent(this, V4VoiceService::class.java).apply { action = V4VoiceService.ACTION_START }
             )
             wakeRunning = true
-            wakeButton.text = "⏹️ Active V4 বন্ধ করুন"
-            statusText.text = "Active V4 চালু — Home Screen বা অন্য App থেকেও বলুন"
+            wakeButton.text = "⏹️ Active JARVIS বন্ধ করুন"
+            statusText.text = "Active JARVIS চালু — Home Screen বা অন্য App থেকেও বলুন"
         } catch (_: Exception) {
-            statusText.text = "Active V4 চালু করা যায়নি"
+            statusText.text = "Active JARVIS চালু করা যায়নি"
         }
     }
 
@@ -104,15 +104,15 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         if (wakeRunning) {
             stopService(Intent(this, V4VoiceService::class.java))
             wakeRunning = false
-            wakeButton.text = "🔊 Active V4 চালু করুন"
-            statusText.text = "Active V4 বন্ধ"
+            wakeButton.text = "🔊 Active JARVIS চালু করুন"
+            statusText.text = "Active JARVIS বন্ধ"
         } else {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) { requestNeededPermissions(); return }
             ContextCompat.startForegroundService(this, Intent(this, V4VoiceService::class.java).apply { action = V4VoiceService.ACTION_START })
             wakeRunning = true
-            wakeButton.text = "⏹️ Active V4 বন্ধ করুন"
-            statusText.text = "Active V4 চালু — Home Screen বা অন্য App থেকেও বলুন"
-            speak(if (language == "bn-BD") "Active V4 চালু করেছি" else "Active V4 is on")
+            wakeButton.text = "⏹️ Active JARVIS বন্ধ করুন"
+            statusText.text = "Active JARVIS চালু — Home Screen বা অন্য App থেকেও বলুন"
+            speak(if (language == "bn-BD") "Active JARVIS চালু করেছি" else "Active JARVIS is on")
         }
     }
 

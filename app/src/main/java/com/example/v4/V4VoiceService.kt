@@ -40,7 +40,6 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
     private var wakeDetectedInPartial = false
     private val handler = Handler()
     private val commandLanguage = "bn-BD"
-    private val wakeLanguage = "en-US"
 
     override fun onCreate() {
         super.onCreate()
@@ -148,7 +147,6 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
             return
         }
 
-        // Active JARVIS remains supported, but is no longer required.
         if (isWakePhrase(command)) {
             val remaining = removeWakePhrase(command)
             if (remaining.isNotBlank()) {
@@ -185,16 +183,11 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
             .trim()
     }
 
-    private fun isWakePhrase(command: String): Boolean {
-        return command.contains("active jarvis") || command.contains("activejarvis")
-    }
+    private fun isWakePhrase(command: String): Boolean =
+        command.contains("active jarvis") || command.contains("activejarvis")
 
-    private fun removeWakePhrase(command: String): String {
-        return command
-            .replace("active jarvis", "")
-            .replace("activejarvis", "")
-            .trim()
-    }
+    private fun removeWakePhrase(command: String): String =
+        command.replace("active jarvis", "").replace("activejarvis", "").trim()
 
     private fun waitForTtsThenListen() {
         if (!ttsReady) {
@@ -285,16 +278,60 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
                 speak("অ্যালার্ম সেট করার স্ক্রিন খুলছি")
                 startActivity(Intent(AlarmClock.ACTION_SET_ALARM).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
             }
+
+            // Phone / communication apps
+            command.contains("call") || command.contains("কল") ||
+                command.contains("ফোন") || command.contains("phone") -> {
+                speak("ফোন খুলছি")
+                startActivity(Intent(Intent.ACTION_DIAL).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            }
             command.contains("whatsapp") || command.contains("হোয়াটসঅ্যাপ") ||
-                command.contains("হোয়াটসঅ্যাপ") -> openApp("com.whatsapp", "WhatsApp")
-            command.contains("facebook") || command.contains("ফেসবুক") ->
-                openApp("com.facebook.katana", "Facebook")
-            command.contains("chrome") || command.contains("ক্রোম") ->
-                openApp("com.android.chrome", "Chrome")
+                command.contains("হোয়াটসঅ্যাপ") -> openAppAny(
+                listOf("com.whatsapp", "com.whatsapp.w4b"), "WhatsApp"
+            )
+            command.contains("messenger") || command.contains("massenger") ||
+                command.contains("মেসেঞ্জার") -> openAppAny(
+                listOf("com.facebook.orca"), "Messenger"
+            )
+
+            // Social apps
+            command.contains("facebook lite") || command.contains("ফেসবুক লাইট") ||
+                command.contains("facebooklight") || command.contains("ফেসবুকলাইট") -> openAppAny(
+                listOf("com.facebook.lite"), "Facebook Lite"
+            )
+            command.contains("facebook") || command.contains("ফেসবুক") -> openAppAny(
+                listOf("com.facebook.katana"), "Facebook"
+            )
+            command.contains("instagram") || command.contains("instageram") ||
+                command.contains("ইনস্টাগ্রাম") -> openAppAny(
+                listOf("com.instagram.android"), "Instagram"
+            )
+            command.contains("tiktok") || command.contains("tik tok") ||
+                command.contains("টিকটক") -> openAppAny(
+                listOf("com.zhiliaoapp.musically", "com.ss.android.ugc.trill"), "TikTok"
+            )
+
+            // Games
+            command.contains("free fire") || command.contains("freefire") ||
+                command.contains("ফ্রি ফায়ার") || command.contains("ফ্রি ফায়ার") -> openAppAny(
+                listOf("com.dts.freefireth", "com.dts.freefiremax"), "Free Fire"
+            )
+
+            // Google / browser / gallery
+            command.contains("chrome") || command.contains("ক্রোম") -> openAppAny(
+                listOf("com.android.chrome"), "Chrome"
+            )
+            command == "google" || command == "গুগল" || command == "google খুলো" ||
+                command == "গুগল খুলো" || command == "google open" -> openAppAny(
+                listOf("com.google.android.googlequicksearchbox"), "Google"
+            )
+            command.contains("gallery") || command.contains("গ্যালারি") ||
+                command.contains("ফটো") || command.contains("photos") -> openGallery()
+
             command.contains("youtube") || command.contains("ইউটিউব") -> {
                 val search = extractAfter(command, listOf("youtube", "ইউটিউব"))
                 if (search.isBlank() || search == "খুলো" || search == "খোল" || search == "open") {
-                    openUrl("https://www.youtube.com", "ইউটিউব খুলছি")
+                    openAppAny(listOf("com.google.android.youtube"), "YouTube", "https://www.youtube.com")
                 } else {
                     openUrl("https://www.youtube.com/results?search_query=" + Uri.encode(search),
                         "ইউটিউবে $search খুঁজে দিচ্ছি")
@@ -303,7 +340,7 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
             command.contains("google") || command.contains("গুগল") -> {
                 val search = extractAfter(command, listOf("google", "গুগল"))
                 if (search.isBlank() || search == "খুলো" || search == "খোল" || search == "open") {
-                    openUrl("https://www.google.com", "গুগল খুলছি")
+                    openAppAny(listOf("com.google.android.googlequicksearchbox"), "Google", "https://www.google.com")
                 } else {
                     openUrl("https://www.google.com/search?q=" + Uri.encode(search),
                         "গুগলে $search খুঁজে দিচ্ছি")
@@ -326,12 +363,14 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
                 else openUrl("https://www.youtube.com/results?search_query=" + Uri.encode(query),
                     "ইউটিউবে $query খুঁজে দিচ্ছি")
             }
+
+            // JARVIS identity / greetings — use Bengali pronunciation so TTS does not spell the name.
             command.contains("হ্যালো") || command.contains("hello") ||
                 command.contains("হাই") || command.contains("hi") ->
-                speak("হ্যালো! আমি JARVIS। কী করতে পারি?")
+                speak("হ্যালো! আমি জার্ভিস। কী করতে পারি?")
             command.contains("তোমার নাম") || command.contains("নাম কি") ||
                 command.contains("নাম কী") || command.contains("your name") ->
-                speak("আমার নাম JARVIS")
+                speak("আমার নাম জার্ভিস")
             command.contains("কি করতে পারো") || command.contains("কী করতে পারো") ||
                 command.contains("what can you do") || command.contains("help") ->
                 speak("আমি হোম স্ক্রিনে যেতে, ভলিউম বাড়াতে কমাতে, মিউট করতে, সময় ও তারিখ বলতে, ব্যাটারি জানাতে, ইউটিউব ও গুগল খুলতে, অ্যাপ খুলতে, ক্যামেরা ও সেটিংস চালু করতে এবং ভয়েস কমান্ড বুঝতে পারি।")
@@ -340,7 +379,7 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
             command.contains("ধন্যবাদ") || command.contains("thank you") ||
                 command.contains("thanks") -> speak("আপনাকেও ধন্যবাদ")
             command.contains("জার্ভিস") || command.contains("jarvis") ->
-                speak("জি, আমি JARVIS। কমান্ড দিন।")
+                speak("জি, আমি জার্ভিস। কমান্ড দিন।")
             command.contains("বন্ধ করো") || command.contains("বন্ধ কর") ||
                 command.contains("stop listening") -> {
                 waitingForCommand = false
@@ -378,12 +417,41 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
         startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
     }
 
-    private fun openApp(packageName: String, name: String) {
-        val intent = packageManager.getLaunchIntentForPackage(packageName)
+    private fun openAppAny(
+        packages: List<String>,
+        name: String,
+        fallbackUrl: String? = null
+    ) {
+        val intent = packages.firstNotNullOfOrNull { packageManager.getLaunchIntentForPackage(it) }
         if (intent != null) {
             speak("$name খুলছি")
             startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-        } else speak("$name ফোনে ইনস্টল নেই")
+        } else if (fallbackUrl != null) {
+            openUrl(fallbackUrl, "$name খুলছি")
+        } else {
+            speak("$name ফোনে ইনস্টল নেই")
+        }
+    }
+
+    private fun openGallery() {
+        val packages = listOf(
+            "com.google.android.apps.photos",
+            "com.sec.android.gallery3d",
+            "com.miui.gallery"
+        )
+        val intent = packages.firstNotNullOfOrNull { packageManager.getLaunchIntentForPackage(it) }
+        if (intent != null) {
+            speak("গ্যালারি খুলছি")
+            startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        } else {
+            speak("গ্যালারি খুলছি")
+            startActivity(
+                Intent(Intent.ACTION_VIEW).apply {
+                    type = "image/*"
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+            )
+        }
     }
 
     private fun speak(text: String) {

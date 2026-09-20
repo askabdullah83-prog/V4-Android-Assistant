@@ -179,7 +179,7 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
             .replace("active be four", "active jarvis")
             .replace("active b4", "active jarvis")
             .replace("active v", "active jarvis")
-            .replace(Regex("\\s+"), " ")
+            .replace(Regex("\s+"), " ")
             .trim()
     }
 
@@ -215,6 +215,27 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 })
             }
+
+            // Close/exit the currently open app. Android does not allow a normal app
+            // to force-stop another app; AccessibilityService performs the safe
+            // equivalent by returning to the Home screen.
+            command.contains("বন্ধ করো") || command.contains("বন্ধ কর") ||
+                command.contains("বন্ধ করে দাও") || command.contains("close app") ||
+                command.contains("close") || command.contains("exit app") -> {
+                if (JarvisAccessibilityService.closeCurrentApp()) {
+                    speak("অ্যাপটি বন্ধ করছি")
+                } else {
+                    speak("অ্যাপ বন্ধ করতে JARVIS Accessibility permission চালু করতে হবে")
+                    try {
+                        startActivity(
+                            Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+                                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        )
+                    } catch (_: Exception) {}
+                }
+                return
+            }
+
             command.contains("volume up") || command.contains("ভলিউম বাড়াও") ||
                 command.contains("ভলিউম বাড়াও") || command.contains("শব্দ বাড়াও") ||
                 command.contains("শব্দ বাড়াও") -> {
@@ -279,7 +300,6 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
                 startActivity(Intent(AlarmClock.ACTION_SET_ALARM).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
             }
 
-            // Phone / communication apps
             command.contains("call") || command.contains("কল") ||
                 command.contains("ফোন") || command.contains("phone") -> {
                 speak("ফোন খুলছি")
@@ -293,8 +313,6 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
                 command.contains("মেসেঞ্জার") -> openAppAny(
                 listOf("com.facebook.orca"), "Messenger"
             )
-
-            // Social apps
             command.contains("facebook lite") || command.contains("ফেসবুক লাইট") ||
                 command.contains("facebooklight") || command.contains("ফেসবুকলাইট") -> openAppAny(
                 listOf("com.facebook.lite"), "Facebook Lite"
@@ -310,14 +328,10 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
                 command.contains("টিকটক") -> openAppAny(
                 listOf("com.zhiliaoapp.musically", "com.ss.android.ugc.trill"), "TikTok"
             )
-
-            // Games
             command.contains("free fire") || command.contains("freefire") ||
                 command.contains("ফ্রি ফায়ার") || command.contains("ফ্রি ফায়ার") -> openAppAny(
                 listOf("com.dts.freefireth", "com.dts.freefiremax"), "Free Fire"
             )
-
-            // Google / browser / gallery
             command.contains("chrome") || command.contains("ক্রোম") -> openAppAny(
                 listOf("com.android.chrome"), "Chrome"
             )
@@ -364,7 +378,6 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
                     "ইউটিউবে $query খুঁজে দিচ্ছি")
             }
 
-            // JARVIS identity / greetings — use Bengali pronunciation so TTS does not spell the name.
             command.contains("হ্যালো") || command.contains("hello") ||
                 command.contains("হাই") || command.contains("hi") ->
                 speak("হ্যালো! আমি জার্ভিস। কী করতে পারি?")
@@ -380,14 +393,6 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
                 command.contains("thanks") -> speak("আপনাকেও ধন্যবাদ")
             command.contains("জার্ভিস") || command.contains("jarvis") ->
                 speak("জি, আমি জার্ভিস। কমান্ড দিন।")
-            command.contains("বন্ধ করো") || command.contains("বন্ধ কর") ||
-                command.contains("stop listening") -> {
-                waitingForCommand = false
-                listeningForWake = false
-                speak("ঠিক আছে। Active JARVIS বন্ধ করছি।")
-                stopSelf()
-                return
-            }
             else -> speak("দুঃখিত, এই কমান্ডটি এখনো বুঝতে পারিনি।")
         }
 
@@ -405,7 +410,7 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
             val index = command.indexOf(key)
             if (index >= 0) {
                 return command.substring(index + key.length)
-                    .replace(Regex("^(খুলো|খোল|open|চালু করো|চালাও)\\s*"), "")
+                    .replace(Regex("^(খুলো|খোল|open|চালু করো|চালাও)\s*"), "")
                     .trim()
             }
         }

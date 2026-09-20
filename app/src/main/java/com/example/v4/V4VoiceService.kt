@@ -179,7 +179,7 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
             .replace("active be four", "active jarvis")
             .replace("active b4", "active jarvis")
             .replace("active v", "active jarvis")
-            .replace(Regex("\s+"), " ")
+            .replace(Regex("\\\\s+"), " ")
             .trim()
     }
 
@@ -410,7 +410,7 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
             val index = command.indexOf(key)
             if (index >= 0) {
                 return command.substring(index + key.length)
-                    .replace(Regex("^(খুলো|খোল|open|চালু করো|চালাও)\s*"), "")
+                    .replace(Regex("^(খুলো|খোল|open|চালু করো|চালাও)\\\\s*"), "")
                     .trim()
             }
         }

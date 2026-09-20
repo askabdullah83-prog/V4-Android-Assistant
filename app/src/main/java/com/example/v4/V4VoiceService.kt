@@ -27,7 +27,7 @@ import java.util.Locale
 class V4VoiceService : Service(), TextToSpeech.OnInitListener {
     companion object {
         const val ACTION_START = "com.example.v4.START"
-        private const val CHANNEL_ID = "v4_voice"
+        private const val CHANNEL_ID = "jarvis_voice"
         private const val NOTIFICATION_ID = 404
     }
 
@@ -52,14 +52,14 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
 
     private fun createChannel() {
         if (Build.VERSION.SDK_INT >= 26) {
-            val channel = NotificationChannel(CHANNEL_ID, "V4 Voice", NotificationManager.IMPORTANCE_LOW)
+            val channel = NotificationChannel(CHANNEL_ID, "JARVIS Voice", NotificationManager.IMPORTANCE_LOW)
             getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
         }
     }
 
     private fun notification(): Notification = NotificationCompat.Builder(this, CHANNEL_ID)
-        .setContentTitle("V4 Active")
-        .setContentText("Background listening — বলুন: Active V4")
+        .setContentTitle("JARVIS Active")
+        .setContentText("Background listening — বলুন: Active JARVIS")
         .setSmallIcon(R.drawable.ic_v4)
         .setOngoing(true)
         .build()
@@ -175,39 +175,39 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
     private fun normalize(value: String): String {
         return value.lowercase(Locale.getDefault())
             .replace("৪", "4")
-            .replace("ভি ফোর", "v4")
-            .replace("ভি ৪", "v4")
-            .replace("ভি চার", "v4")
-            .replace("v four", "v4")
-            .replace("v 4", "v4")
+            .replace("জার্ভিস", "jarvis")
+            .replace("জার্ভিস", "jarvis")
+            .replace("জার্ভিস", "jarvis")
+            .replace("jarvis", "jarvis")
+            .replace("jarvis", "jarvis")
             .replace("অ্যাকটিভ", "active")
             .replace("অ্যাক্টিভ", "active")
             .replace("এক্টিভ", "active")
             .replace("একটিভ", "active")
             .replace("অ্যাক্টিভেট", "active")
             .replace("অ্যাক্টিভেটেড", "active")
-            .replace("active v for", "active v4")
-            .replace("active before", "active v4")
-            .replace("active be four", "active v4")
-            .replace("active b4", "active v4")
-            .replace("active v", "active v4")
+            .replace("active v for", "active jarvis")
+            .replace("active before", "active jarvis")
+            .replace("active be four", "active jarvis")
+            .replace("active b4", "active jarvis")
+            .replace("active v", "active jarvis")
             .replace(Regex("\\s+"), " ")
             .trim()
     }
 
     private fun isWakePhrase(command: String): Boolean {
-        return command.contains("active v4") ||
-            command.contains("activev4") ||
-            command.contains("active four") ||
-            command.contains("active 4")
+        return command.contains("active jarvis") ||
+            command.contains("activejarvis") ||
+            command.contains("active jarvis") ||
+            command.contains("active jarvis")
     }
 
     private fun removeWakePhrase(command: String): String {
         return command
-            .replace("active v4", "")
-            .replace("activev4", "")
-            .replace("active four", "")
-            .replace("active 4", "")
+            .replace("active jarvis", "")
+            .replace("activejarvis", "")
+            .replace("active jarvis", "")
+            .replace("active jarvis", "")
             .trim()
     }
 
@@ -353,12 +353,12 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
                 command.contains("how are you") -> speak("আমি ভালো আছি। আপনার কমান্ডের জন্য প্রস্তুত।")
             command.contains("ধন্যবাদ") || command.contains("thank you") ||
                 command.contains("thanks") -> speak("আপনাকেও ধন্যবাদ")
-            command.contains("জার্ভিস") || command.contains("jarvis") -> speak("জি, আমি V4। কমান্ড দিন।")
+            command.contains("জার্ভিস") || command.contains("jarvis") -> speak("জি, আমি JARVIS। কমান্ড দিন।")
             command.contains("বন্ধ করো") || command.contains("বন্ধ কর") ||
                 command.contains("stop listening") -> {
                 waitingForCommand = false
                 listeningForWake = false
-                speak("ঠিক আছে। Active V4 বন্ধ করছি।")
+                speak("ঠিক আছে। Active JARVIS বন্ধ করছি।")
                 stopSelf()
                 return
             }
@@ -401,7 +401,7 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
 
     private fun speak(text: String) {
         if (!ttsReady) return
-        val utteranceId = if (text == "জি, বলুন") "V4_WAKE_REPLY" else "V4_REPLY"
+        val utteranceId = if (text == "জি, বলুন") "JARVIS_WAKE_REPLY" else "JARVIS_REPLY"
         tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, utteranceId)
     }
 
@@ -423,7 +423,7 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
         tts.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
             override fun onStart(utteranceId: String?) {}
             override fun onDone(utteranceId: String?) {
-                if (utteranceId == "V4_WAKE_REPLY" && waitingForCommand) handler.post { startRecognition() }
+                if (utteranceId == "JARVIS_WAKE_REPLY" && waitingForCommand) handler.post { startRecognition() }
             }
             override fun onError(utteranceId: String?) {}
         })

@@ -201,8 +201,8 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             command.contains("facebook") || command.contains("ফেসবুক") -> openApp("com.facebook.katana", "Facebook")
             command.contains("chrome") || command.contains("ক্রোম") -> openApp("com.android.chrome", "Chrome")
             command.contains("কল") || command.contains("ফোন কর") || command.contains("call") -> { speak(if (language == "bn-BD") "কল করার জন্য ডায়ালার খুলছি" else "Opening the dialer"); startActivity(Intent(Intent.ACTION_DIAL)) }
-            command.contains("হ্যালো") || command.contains("হাই") || command.contains("hello") || command.contains("hi") -> speak(if (language == "bn-BD") "হ্যালো! আমি V4। কী করতে পারি?" else "Hello! I am V4. How can I help?")
-            command.contains("তোমার নাম") || command.contains("নাম কি") || command.contains("নাম কী") || command.contains("your name") -> speak(if (language == "bn-BD") "আমার নাম V4" else "My name is V4")
+            command.contains("হ্যালো") || command.contains("হাই") || command.contains("hello") || command.contains("hi") -> speak(if (language == "bn-BD") "হ্যালো! আমি JARVIS। কী করতে পারি?" else "Hello! I am JARVIS. How can I help?")
+            command.contains("তোমার নাম") || command.contains("নাম কি") || command.contains("নাম কী") || command.contains("your name") -> speak(if (language == "bn-BD") "আমার নাম V4" else "My name is JARVIS")
             command.contains("কেমন আছ") || command.contains("কেমন আছেন") || command.contains("how are you") -> speak(if (language == "bn-BD") "আমি ভালো আছি। ধন্যবাদ!" else "I am fine. Thank you!")
             command.contains("ধন্যবাদ") || command.contains("thank you") || command.contains("thanks") -> speak(if (language == "bn-BD") "আপনাকেও ধন্যবাদ" else "You are welcome")
             else -> speak(if (language == "bn-BD") "দুঃখিত, এই কমান্ডটি এখনো বুঝতে পারিনি।" else "Sorry, I do not understand that command yet.")
@@ -234,7 +234,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     private fun speak(text: String) {
         tts.language = if (language == "bn-BD") Locale("bn", "BD") else Locale.US
-        tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, "V4_REPLY")
+        tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, "JARVIS_REPLY")
     }
 
     override fun onInit(status: Int) {

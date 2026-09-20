@@ -34,8 +34,11 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
     private var waitingForCommand = false
     private var recognitionRunning = false
     private var ttsReady = false
+    private var listeningForWake = true
+    private var wakeDetectedInPartial = false
     private val handler = Handler()
-    private val language = "bn-BD"
+    private val commandLanguage = "bn-BD"
+    private val wakeLanguage = "en-US"
 
     override fun onCreate() {
         super.onCreate()
@@ -83,11 +86,23 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
                 recognitionRunning = false
                 if (waitingForCommand && error == SpeechRecognizer.ERROR_NO_MATCH) {
                     waitingForCommand = false
+                    listeningForWake = true
                     speak("দুঃখিত, কমান্ডটি শুনতে পারিনি।")
                 }
                 handler.postDelayed({ startRecognition() }, 700)
             }
-            override fun onPartialResults(partialResults: Bundle?) {}
+            override fun onPartialResults(partialResults: Bundle?) {
+                val partial = partialResults
+                    ?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
+                    ?.firstOrNull()
+                    .orEmpty()
+                if (listeningForWake && !wakeDetectedInPartial && isWakePhrase(normalize(partial))) {
+                    wakeDetectedInPartial = true
+                    recognitionRunning = false
+                    try { recognizer?.cancel() } catch (_: Exception) {}
+                    handler.post { handleVoice(partial) }
+                }
+            }
             override fun onEvent(eventType: Int, params: Bundle?) {}
 
             override fun onResults(results: Bundle?) {
@@ -107,8 +122,8 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
 
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-            putExtra(RecognizerIntent.EXTRA_LANGUAGE, language)
-            putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, language)
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE, if (listeningForWake) wakeLanguage else commandLanguage)
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, if (listeningForWake) wakeLanguage else commandLanguage)
             putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 10)
             putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
             putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, packageName)
@@ -116,6 +131,7 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
 
         try {
             recognitionRunning = true
+            wakeDetectedInPartial = false
             recognizer?.startListening(intent)
         } catch (_: Exception) {
             handler.postDelayed({ startRecognition() }, 1000)
@@ -126,6 +142,7 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
         val command = normalize(text)
 
         if (command.isBlank()) {
+            listeningForWake = true
             handler.postDelayed({ startRecognition() }, 400)
             return
         }
@@ -136,6 +153,7 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
                 executeCommand(remaining)
             } else {
                 waitingForCommand = true
+                listeningForWake = false
                 speak("জি, বলুন")
                 waitForTtsThenListen()
             }
@@ -202,6 +220,7 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
         val command = normalize(original)
         if (command.isBlank()) {
             speak("কমান্ডটি বুঝতে পারিনি। আবার বলুন।")
+            listeningForWake = true
             handler.postDelayed({ startRecognition() }, 1200)
             return
         }
@@ -364,6 +383,7 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
             else -> speak("দুঃখিত, এই কমান্ডটি এখনো বুঝতে পারিনি।")
         }
 
+        listeningForWake = true
         handler.postDelayed({ startRecognition() }, 1200)
     }
 

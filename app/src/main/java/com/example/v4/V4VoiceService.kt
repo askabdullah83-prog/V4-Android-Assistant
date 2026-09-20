@@ -36,7 +36,7 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
     private var waitingForCommand = false
     private var recognitionRunning = false
     private var ttsReady = false
-    private var listeningForWake = true
+    private var listeningForWake = false
     private var wakeDetectedInPartial = false
     private val handler = Handler()
     private val commandLanguage = "bn-BD"
@@ -59,7 +59,7 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
 
     private fun notification(): Notification = NotificationCompat.Builder(this, CHANNEL_ID)
         .setContentTitle("JARVIS Active")
-        .setContentText("Background listening — বলুন: Active JARVIS")
+        .setContentText("Home Screen direct listening — যেকোনো কমান্ড বলুন")
         .setSmallIcon(R.drawable.ic_v4)
         .setOngoing(true)
         .build()
@@ -85,7 +85,6 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
                 recognitionRunning = false
                 if (waitingForCommand && error == SpeechRecognizer.ERROR_NO_MATCH) {
                     waitingForCommand = false
-                    listeningForWake = true
                     speak("দুঃখিত, কমান্ডটি শুনতে পারিনি।")
                 }
                 handler.postDelayed({ startRecognition() }, 700)
@@ -124,8 +123,8 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
 
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-            putExtra(RecognizerIntent.EXTRA_LANGUAGE, if (listeningForWake) wakeLanguage else commandLanguage)
-            putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, if (listeningForWake) wakeLanguage else commandLanguage)
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE, commandLanguage)
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, commandLanguage)
             putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 10)
             putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
             putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, packageName)
@@ -145,12 +144,12 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
         val command = normalize(text)
 
         if (command.isBlank()) {
-            listeningForWake = true
             handler.postDelayed({ startRecognition() }, 400)
             return
         }
 
-        if (!waitingForCommand && isWakePhrase(command)) {
+        // Active JARVIS remains supported, but is no longer required.
+        if (isWakePhrase(command)) {
             val remaining = removeWakePhrase(command)
             if (remaining.isNotBlank()) {
                 executeCommand(remaining)
@@ -163,23 +162,14 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
             return
         }
 
-        if (waitingForCommand) {
-            waitingForCommand = false
-            executeCommand(text)
-            return
-        }
-
-        handler.postDelayed({ startRecognition() }, 400)
+        waitingForCommand = false
+        executeCommand(text)
     }
 
     private fun normalize(value: String): String {
         return value.lowercase(Locale.getDefault())
             .replace("৪", "4")
             .replace("জার্ভিস", "jarvis")
-            .replace("জার্ভিস", "jarvis")
-            .replace("জার্ভিস", "jarvis")
-            .replace("jarvis", "jarvis")
-            .replace("jarvis", "jarvis")
             .replace("অ্যাকটিভ", "active")
             .replace("অ্যাক্টিভ", "active")
             .replace("এক্টিভ", "active")
@@ -196,18 +186,13 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
     }
 
     private fun isWakePhrase(command: String): Boolean {
-        return command.contains("active jarvis") ||
-            command.contains("activejarvis") ||
-            command.contains("active jarvis") ||
-            command.contains("active jarvis")
+        return command.contains("active jarvis") || command.contains("activejarvis")
     }
 
     private fun removeWakePhrase(command: String): String {
         return command
             .replace("active jarvis", "")
             .replace("activejarvis", "")
-            .replace("active jarvis", "")
-            .replace("active jarvis", "")
             .trim()
     }
 
@@ -224,7 +209,6 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
 
         if (command.isBlank()) {
             speak("কমান্ডটি বুঝতে পারিনি। আবার বলুন।")
-            listeningForWake = true
             handler.postDelayed({ startRecognition() }, 1200)
             return
         }
@@ -343,9 +327,11 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
                     "ইউটিউবে $query খুঁজে দিচ্ছি")
             }
             command.contains("হ্যালো") || command.contains("hello") ||
-                command.contains("হাই") || command.contains("hi") -> speak("হ্যালো! আমি V4। কী করতে পারি?")
+                command.contains("হাই") || command.contains("hi") ->
+                speak("হ্যালো! আমি JARVIS। কী করতে পারি?")
             command.contains("তোমার নাম") || command.contains("নাম কি") ||
-                command.contains("নাম কী") || command.contains("your name") -> speak("আমার নাম V4")
+                command.contains("নাম কী") || command.contains("your name") ->
+                speak("আমার নাম JARVIS")
             command.contains("কি করতে পারো") || command.contains("কী করতে পারো") ||
                 command.contains("what can you do") || command.contains("help") ->
                 speak("আমি হোম স্ক্রিনে যেতে, ভলিউম বাড়াতে কমাতে, মিউট করতে, সময় ও তারিখ বলতে, ব্যাটারি জানাতে, ইউটিউব ও গুগল খুলতে, অ্যাপ খুলতে, ক্যামেরা ও সেটিংস চালু করতে এবং ভয়েস কমান্ড বুঝতে পারি।")
@@ -353,7 +339,8 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
                 command.contains("how are you") -> speak("আমি ভালো আছি। আপনার কমান্ডের জন্য প্রস্তুত।")
             command.contains("ধন্যবাদ") || command.contains("thank you") ||
                 command.contains("thanks") -> speak("আপনাকেও ধন্যবাদ")
-            command.contains("জার্ভিস") || command.contains("jarvis") -> speak("জি, আমি JARVIS। কমান্ড দিন।")
+            command.contains("জার্ভিস") || command.contains("jarvis") ->
+                speak("জি, আমি JARVIS। কমান্ড দিন।")
             command.contains("বন্ধ করো") || command.contains("বন্ধ কর") ||
                 command.contains("stop listening") -> {
                 waitingForCommand = false
@@ -365,7 +352,7 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
             else -> speak("দুঃখিত, এই কমান্ডটি এখনো বুঝতে পারিনি।")
         }
 
-        listeningForWake = true
+        listeningForWake = false
         handler.postDelayed({ startRecognition() }, 1200)
     }
 

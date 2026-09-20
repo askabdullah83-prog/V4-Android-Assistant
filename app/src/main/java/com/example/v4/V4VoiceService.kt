@@ -32,6 +32,7 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
     private var recognizer: SpeechRecognizer? = null
     private lateinit var tts: TextToSpeech
     private var waitingForCommand = false
+    private var recognitionRunning = false
     private var ttsReady = false
     private val handler = Handler()
     private val language = "bn-BD"
@@ -63,6 +64,7 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
         .build()
 
     private fun startRecognition() {
+        if (recognitionRunning) return
         if (!SpeechRecognizer.isRecognitionAvailable(this)) {
             handler.postDelayed({ startRecognition() }, 2000)
             return
@@ -78,12 +80,18 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
             override fun onBufferReceived(buffer: ByteArray?) {}
             override fun onEndOfSpeech() {}
             override fun onError(error: Int) {
+                recognitionRunning = false
+                if (waitingForCommand && error == SpeechRecognizer.ERROR_NO_MATCH) {
+                    waitingForCommand = false
+                    speak("দুঃখিত, কমান্ডটি শুনতে পারিনি।")
+                }
                 handler.postDelayed({ startRecognition() }, 700)
             }
             override fun onPartialResults(partialResults: Bundle?) {}
             override fun onEvent(eventType: Int, params: Bundle?) {}
 
             override fun onResults(results: Bundle?) {
+                recognitionRunning = false
                 val matches = results
                     ?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
                     .orEmpty()
@@ -107,6 +115,7 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
         }
 
         try {
+            recognitionRunning = true
             recognizer?.startListening(intent)
         } catch (_: Exception) {
             handler.postDelayed({ startRecognition() }, 1000)
@@ -191,6 +200,11 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
 
     private fun executeCommand(original: String) {
         val command = normalize(original)
+        if (command.isBlank()) {
+            speak("কমান্ডটি বুঝতে পারিনি। আবার বলুন।")
+            handler.postDelayed({ startRecognition() }, 1200)
+            return
+        }
 
         when {
             command.contains("সময়") || command.contains("সময়") ||
@@ -335,10 +349,22 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
             command.contains("ধন্যবাদ") || command.contains("thank you") ||
                 command.contains("thanks") -> speak("আপনাকেও ধন্যবাদ")
 
+            command.contains("জার্ভিস") || command.contains("jarvis") -> {
+                speak("জি, আমি V4। কমান্ড দিন।")
+            }
+
+            command.contains("বন্ধ করো") || command.contains("বন্ধ কর") ||
+                command.contains("stop listening") -> {
+                waitingForCommand = false
+                speak("ঠিক আছে। Active V4 বন্ধ করছি।")
+                stopSelf()
+                return
+            }
+
             else -> speak("দুঃখিত, এই কমান্ডটি এখনো বুঝতে পারিনি।")
         }
 
-        handler.postDelayed({ startRecognition() }, 900)
+        handler.postDelayed({ startRecognition() }, 1200)
     }
 
     private fun extractAfter(command: String, keys: List<String>): String {
@@ -416,6 +442,7 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
 
     override fun onDestroy() {
         handler.removeCallbacksAndMessages(null)
+        recognitionRunning = false
         recognizer?.destroy()
         tts.stop()
         tts.shutdown()

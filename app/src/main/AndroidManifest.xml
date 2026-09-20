@@ -14,7 +14,7 @@
 
     <application
         android:allowBackup="true"
-        android:label="V4"
+        android:label="JARVIS"
         android:icon="@drawable/ic_v4"
         android:roundIcon="@drawable/ic_v4"
         android:supportsRtl="true"

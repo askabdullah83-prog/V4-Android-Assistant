@@ -20,7 +20,7 @@
                 android:layout_width="58dp"
                 android:layout_height="58dp"
                 android:src="@drawable/ic_v4"
-                android:contentDescription="V4 icon" />
+                android:contentDescription="JARVIS icon" />
 
             <LinearLayout
                 android:layout_width="0dp"
@@ -32,7 +32,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="V4"
+                    android:text="JARVIS"
                     android:textColor="#F8FAFC"
                     android:textSize="29sp"
                     android:textStyle="bold" />
@@ -67,7 +67,7 @@
                 android:layout_width="92dp"
                 android:layout_height="92dp"
                 android:src="@drawable/ic_v4"
-                android:contentDescription="V4 voice control" />
+                android:contentDescription="JARVIS voice control" />
 
             <TextView
                 android:id="@+id/statusText"
@@ -75,7 +75,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
                 android:gravity="center"
-                android:text="V4 প্রস্তুত — আপনার কমান্ডের অপেক্ষায়"
+                android:text="JARVIS প্রস্তুত — আপনার কমান্ডের অপেক্ষায়"
                 android:textColor="#F8FAFC"
                 android:textSize="19sp"
                 android:textStyle="bold" />
@@ -85,7 +85,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
                 android:gravity="center"
-                android:text="বলুন “Active V4” তারপর যা করতে চান বলুন"
+                android:text="বলুন “Active JARVIS” তারপর যা করতে চান বলুন"
                 android:textColor="#94A3B8"
                 android:textSize="13sp" />
         </LinearLayout>
@@ -108,7 +108,7 @@
             android:layout_height="56dp"
             android:layout_marginTop="10dp"
             android:background="@drawable/v4_secondary"
-            android:text="🔊  Active V4"
+            android:text="🔊  Active JARVIS"
             android:textAllCaps="false"
             android:textColor="#E2E8F0"
             android:textSize="16sp"
@@ -134,7 +134,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="V4 দিয়ে ফোনে কাজ করুন"
+                android:text="JARVIS দিয়ে ফোনে কাজ করুন"
                 android:textColor="#F8FAFC"
                 android:textSize="17sp"
                 android:textStyle="bold" />
@@ -196,7 +196,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
             android:gravity="center"
-            android:text="V4 • বাংলা + English • Voice Control"
+            android:text="JARVIS • বাংলা + English • Voice Control"
             android:textColor="#64748B"
             android:textSize="12sp" />
 

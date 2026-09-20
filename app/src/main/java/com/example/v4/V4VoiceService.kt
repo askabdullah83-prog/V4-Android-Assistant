@@ -4,7 +4,9 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
+import android.content.Context
 import android.content.Intent
+import android.media.AudioManager
 import android.net.Uri
 import android.os.BatteryManager
 import android.os.Build
@@ -82,6 +84,7 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
             override fun onRmsChanged(rmsdB: Float) {}
             override fun onBufferReceived(buffer: ByteArray?) {}
             override fun onEndOfSpeech() {}
+
             override fun onError(error: Int) {
                 recognitionRunning = false
                 if (waitingForCommand && error == SpeechRecognizer.ERROR_NO_MATCH) {
@@ -91,11 +94,13 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
                 }
                 handler.postDelayed({ startRecognition() }, 700)
             }
+
             override fun onPartialResults(partialResults: Bundle?) {
                 val partial = partialResults
                     ?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
                     ?.firstOrNull()
                     .orEmpty()
+
                 if (listeningForWake && !wakeDetectedInPartial && isWakePhrase(normalize(partial))) {
                     wakeDetectedInPartial = true
                     recognitionRunning = false
@@ -103,6 +108,7 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
                     handler.post { handleVoice(partial) }
                 }
             }
+
             override fun onEvent(eventType: Int, params: Bundle?) {}
 
             override fun onResults(results: Bundle?) {
@@ -134,6 +140,7 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
             wakeDetectedInPartial = false
             recognizer?.startListening(intent)
         } catch (_: Exception) {
+            recognitionRunning = false
             handler.postDelayed({ startRecognition() }, 1000)
         }
     }
@@ -188,7 +195,7 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
             .replace("active be four", "active v4")
             .replace("active b4", "active v4")
             .replace("active v", "active v4")
-            .replace(Regex("\\s+"), " ")
+            .replace(Regex("\s+"), " ")
             .trim()
     }
 
@@ -218,6 +225,7 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
 
     private fun executeCommand(original: String) {
         val command = normalize(original)
+
         if (command.isBlank()) {
             speak("কমান্ডটি বুঝতে পারিনি। আবার বলুন।")
             listeningForWake = true
@@ -226,6 +234,44 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
         }
 
         when {
+            command.contains("home") || command.contains("হোম") ||
+                command.contains("হোমে যাও") || command.contains("হোম স্ক্রিন") -> {
+                speak("হোম স্ক্রিনে যাচ্ছি")
+                startActivity(
+                    Intent(Intent.ACTION_MAIN).apply {
+                        addCategory(Intent.CATEGORY_HOME)
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    }
+                )
+            }
+
+            command.contains("volume up") || command.contains("ভলিউম বাড়াও") ||
+                command.contains("ভলিউম বাড়াও") || command.contains("শব্দ বাড়াও") ||
+                command.contains("শব্দ বাড়াও") -> {
+                adjustVolume(AudioManager.ADJUST_RAISE)
+                speak("ভলিউম বাড়িয়েছি")
+            }
+
+            command.contains("volume down") || command.contains("ভলিউম কমাও") ||
+                command.contains("শব্দ কমাও") -> {
+                adjustVolume(AudioManager.ADJUST_LOWER)
+                speak("ভলিউম কমিয়েছি")
+            }
+
+            command.contains("mute") || command.contains("মিউট") ||
+                command.contains("নিরব করো") || command.contains("নীরব করো") -> {
+                val audio = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+                audio.adjustVolume(AudioManager.ADJUST_MUTE, 0)
+                speak("ফোন মিউট করেছি")
+            }
+
+            command.contains("unmute") || command.contains("আনমিউট") ||
+                command.contains("শব্দ চালু") -> {
+                val audio = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+                audio.adjustVolume(AudioManager.ADJUST_UNMUTE, 0)
+                speak("শব্দ চালু করেছি")
+            }
+
             command.contains("সময়") || command.contains("সময়") ||
                 command.contains("কয়টা বাজে") || command.contains("কয়টা বাজে") ||
                 command.contains("ঘড়ি") || command.contains("ঘড়ি") ||
@@ -357,7 +403,7 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
 
             command.contains("কি করতে পারো") || command.contains("কী করতে পারো") ||
                 command.contains("what can you do") || command.contains("help") -> {
-                speak("আমি সময় ও তারিখ বলতে, ব্যাটারি জানাতে, ইউটিউব ও গুগল খুলতে, অ্যাপ খুলতে, ক্যামেরা ও সেটিংস চালু করতে এবং ভয়েস কমান্ড বুঝতে পারি।")
+                speak("আমি হোম স্ক্রিনে যেতে, ভলিউম বাড়াতে কমাতে, মিউট করতে, সময় ও তারিখ বলতে, ব্যাটারি জানাতে, ইউটিউব ও গুগল খুলতে, অ্যাপ খুলতে, ক্যামেরা ও সেটিংস চালু করতে এবং ভয়েস কমান্ড বুঝতে পারি।")
             }
 
             command.contains("কেমন আছ") || command.contains("কেমন আছেন") ||
@@ -375,6 +421,7 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
             command.contains("বন্ধ করো") || command.contains("বন্ধ কর") ||
                 command.contains("stop listening") -> {
                 waitingForCommand = false
+                listeningForWake = false
                 speak("ঠিক আছে। Active V4 বন্ধ করছি।")
                 stopSelf()
                 return
@@ -387,12 +434,17 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
         handler.postDelayed({ startRecognition() }, 1200)
     }
 
+    private fun adjustVolume(direction: Int) {
+        val audio = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        audio.adjustStreamVolume(AudioManager.STREAM_MUSIC, direction, 0)
+    }
+
     private fun extractAfter(command: String, keys: List<String>): String {
         for (key in keys) {
             val index = command.indexOf(key)
             if (index >= 0) {
                 return command.substring(index + key.length)
-                    .replace(Regex("^(খুলো|খোল|open|চালু করো|চালাও)\\s*"), "")
+                    .replace(Regex("^(খুলো|খোল|open|চালু করো|চালাও)\s*"), "")
                     .trim()
             }
         }
@@ -459,6 +511,18 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int = START_STICKY
+
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        handler.postDelayed({
+            try {
+                startService(Intent(this, V4VoiceService::class.java).apply {
+                    action = ACTION_START
+                })
+            } catch (_: Exception) {
+            }
+        }, 1000)
+        super.onTaskRemoved(rootIntent)
+    }
 
     override fun onDestroy() {
         handler.removeCallbacksAndMessages(null)

@@ -4,11 +4,12 @@
     android:layout_height="match_parent"
     android:background="@drawable/v4_bg"
     android:fillViewport="true">
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="20dp">
+        android:padding="18dp">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -25,22 +26,32 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginStart="12dp"
+                android:layout_marginStart="13dp"
                 android:orientation="vertical">
+
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="V4"
                     android:textColor="#F8FAFC"
-                    android:textSize="28sp"
+                    android:textSize="29sp"
                     android:textStyle="bold" />
+
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Your personal AI voice assistant"
+                    android:text="Your Personal Voice Assistant"
                     android:textColor="#94A3B8"
                     android:textSize="13sp" />
             </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="● ON"
+                android:textColor="#38BDF8"
+                android:textSize="12sp"
+                android:textStyle="bold" />
         </LinearLayout>
 
         <LinearLayout
@@ -48,32 +59,33 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="18dp"
             android:padding="20dp"
+            android:gravity="center"
             android:orientation="vertical"
             android:background="@drawable/v4_card">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="●  ACTIVE"
-                android:textColor="#38BDF8"
-                android:textSize="12sp"
-                android:textStyle="bold" />
+            <ImageView
+                android:layout_width="92dp"
+                android:layout_height="92dp"
+                android:src="@drawable/ic_v4"
+                android:contentDescription="V4 voice control" />
 
             <TextView
                 android:id="@+id/statusText"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="V4 প্রস্তুত — কমান্ডের অপেক্ষায়"
+                android:layout_marginTop="12dp"
+                android:gravity="center"
+                android:text="V4 প্রস্তুত — আপনার কমান্ডের অপেক্ষায়"
                 android:textColor="#F8FAFC"
-                android:textSize="20sp"
+                android:textSize="19sp"
                 android:textStyle="bold" />
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="7dp"
-                android:text="“Active V4” বললেই V4 জেগে উঠবে"
+                android:layout_marginTop="6dp"
+                android:gravity="center"
+                android:text="বলুন “Active V4” তারপর যা করতে চান বলুন"
                 android:textColor="#94A3B8"
                 android:textSize="13sp" />
         </LinearLayout>
@@ -81,8 +93,8 @@
         <Button
             android:id="@+id/listenButton"
             android:layout_width="match_parent"
-            android:layout_height="64dp"
-            android:layout_marginTop="18dp"
+            android:layout_height="62dp"
+            android:layout_marginTop="14dp"
             android:background="@drawable/v4_primary"
             android:text="🎙  কথা বলুন"
             android:textAllCaps="false"
@@ -93,7 +105,7 @@
         <Button
             android:id="@+id/wakeButton"
             android:layout_width="match_parent"
-            android:layout_height="58dp"
+            android:layout_height="56dp"
             android:layout_marginTop="10dp"
             android:background="@drawable/v4_secondary"
             android:text="🔊  Active V4"
@@ -105,42 +117,36 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:text="V4 CAN DO"
-            android:textColor="#64748B"
+            android:layout_marginTop="22dp"
+            android:text="PHONE CONTROL"
+            android:textColor="#38BDF8"
             android:textSize="12sp"
             android:textStyle="bold" />
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="9dp"
+            android:layout_marginTop="8dp"
+            android:padding="16dp"
             android:orientation="vertical"
-            android:background="@drawable/v4_card"
-            android:padding="14dp">
+            android:background="@drawable/v4_card">
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="⏰  সময় ও তারিখ     🔋  ব্যাটারি     📶  Wi-Fi / Bluetooth"
-                android:textColor="#E2E8F0"
-                android:textSize="14sp" />
+                android:text="V4 দিয়ে ফোনে কাজ করুন"
+                android:textColor="#F8FAFC"
+                android:textSize="17sp"
+                android:textStyle="bold" />
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:text="▶  YouTube / Google     📱  Apps     📷  Camera"
-                android:textColor="#E2E8F0"
-                android:textSize="14sp" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:text="📞  Dialer / Call     ⚙  Settings     🗣  Voice commands"
-                android:textColor="#E2E8F0"
-                android:textSize="14sp" />
+                android:layout_marginTop="8dp"
+                android:text="• “YouTube খোলো”&#10;• “Wi-Fi settings খোলো”&#10;• “Bluetooth চালু আছে?”&#10;• “ক্যামেরা খোলো”&#10;• “WhatsApp খোলো”&#10;• “কয়টা বাজে?”"
+                android:textColor="#CBD5E1"
+                android:textSize="14sp"
+                android:lineSpacingExtra="3dp" />
         </LinearLayout>
 
         <TextView
@@ -155,13 +161,13 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="9dp"
+            android:layout_marginTop="8dp"
             android:orientation="horizontal">
 
             <Button
                 android:id="@+id/languageButton"
                 android:layout_width="0dp"
-                android:layout_height="52dp"
+                android:layout_height="54dp"
                 android:layout_weight="1"
                 android:background="@drawable/v4_secondary"
                 android:text="🌐  বাংলা / English"
@@ -170,13 +176,13 @@
                 android:textSize="13sp" />
 
             <Space
-                android:layout_width="8dp"
+                android:layout_width="9dp"
                 android:layout_height="1dp" />
 
             <Button
                 android:id="@+id/settingsButton"
                 android:layout_width="0dp"
-                android:layout_height="52dp"
+                android:layout_height="54dp"
                 android:layout_weight="1"
                 android:background="@drawable/v4_secondary"
                 android:text="⚙  Settings"
@@ -190,8 +196,9 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
             android:gravity="center"
-            android:text="V4 • বাংলা + English • Voice Assistant"
+            android:text="V4 • বাংলা + English • Voice Control"
             android:textColor="#64748B"
             android:textSize="12sp" />
+
     </LinearLayout>
 </ScrollView>

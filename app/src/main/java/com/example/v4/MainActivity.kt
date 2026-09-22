@@ -2,6 +2,7 @@ package com.example.v4
 
 import android.Manifest
 import android.bluetooth.BluetoothAdapter
+import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -33,6 +34,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     private var recognizer: SpeechRecognizer? = null
     private var language = "bn-BD"
     private var wakeRunning = false
+    private val speechRequestCode = 4001
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -117,12 +119,32 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     }
 
     private fun startListening() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) { requestNeededPermissions(); return }
-        if (!SpeechRecognizer.isRecognitionAvailable(this)) {
-            statusText.text = "Speech Recognition service পাওয়া যাচ্ছে না"
-            speak(if (language == "bn-BD") "স্পিচ রিকগনিশন সার্ভিস পাওয়া যাচ্ছে না" else "Speech recognition service is not available")
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            requestNeededPermissions()
             return
         }
+
+        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE, language)
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, language)
+            putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 5)
+            putExtra(RecognizerIntent.EXTRA_PROMPT, if (language == "bn-BD") "বলুন..." else "Speak...")
+        }
+
+        // Some phones have Google's voice input Activity but do not expose a
+        // SpeechRecognizer service. Use the Activity fallback in that case.
+        if (!SpeechRecognizer.isRecognitionAvailable(this)) {
+            try {
+                statusText.text = "ভয়েস ইনপুট খুলছি..."
+                startActivityForResult(intent, speechRequestCode)
+            } catch (_: ActivityNotFoundException) {
+                statusText.text = "কোনো Speech Recognition service পাওয়া যায়নি"
+                speak(if (language == "bn-BD") "এই ফোনে স্পিচ রিকগনিশন সার্ভিস পাওয়া যাচ্ছে না" else "No speech recognition service is available on this phone")
+            }
+            return
+        }
+
         recognizer?.destroy()
         recognizer = SpeechRecognizer.createSpeechRecognizer(this)
         recognizer?.setRecognitionListener(object : RecognitionListener {
@@ -150,14 +172,18 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             override fun onPartialResults(partialResults: Bundle?) {}
             override fun onEvent(eventType: Int, params: Bundle?) {}
         })
-        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-            putExtra(RecognizerIntent.EXTRA_LANGUAGE, language)
-            putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, language)
-            putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 5)
-        }
+
         statusText.text = "শুরু হচ্ছে..."
         recognizer?.startListening(intent)
+    }
+
+    @Deprecated("Use Activity Result APIs in new code; kept for Android compatibility.")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode != speechRequestCode || resultCode != RESULT_OK) return
+        val text = data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)?.firstOrNull().orEmpty()
+        statusText.text = text.ifBlank { "কিছু শোনা যায়নি" }
+        if (text.isNotBlank()) handleCommand(text.trim())
     }
 
     private fun handleCommand(originalCommand: String) {

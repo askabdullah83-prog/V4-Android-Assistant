@@ -1,39 +1,43 @@
 # JARVIS — Siri-style Android Voice Assistant
 
-বাংলা + English ভয়েস অ্যাসিস্ট্যান্ট, iPhone-এর Siri-এর মতো অভিজ্ঞতা।
+বাংলা + English ভয়েস অ্যাসিস্ট্যান্ট। ফোনের **সব অ্যাপ** নাম ধরে খোলা ও বন্ধ করা যায়।
 
-## Wake Word (Siri-style)
+## Wake Word
 
-বলুন:
 - **Hey JARVIS**
 - **হ্যালো জার্ভিস**
 - **ওহে জার্ভিস**
-- **Hello JARVIS**
 - **Active JARVIS**
 
-তারপর আপনার কমান্ড বলুন।
+## অ্যাপ খোলা / বন্ধ করা
 
-## Features
+যেকোনো ইনস্টল করা অ্যাপের নাম বলুন:
 
-- Continuous background listening
-- Natural Siri-like responses
-- Time, date, battery
-- Open apps (WhatsApp, YouTube, Facebook, Instagram, Chrome...)
-- Volume control, mute/unmute
+- “WhatsApp খোলো”
+- “Facebook খোলো”
+- “Pathao খোলো”
+- “imo খোলো”
+- “অ্যাপ বন্ধ করো” / “বন্ধ করো” → বর্তমান অ্যাপ বন্ধ (হোমে যায়)
+- “পেছনে যাও” / “Back”
+
+JARVIS ফোনে থাকা **সব লঞ্চার অ্যাপ** স্ক্যান করে নাম ম্যাচ করে খোলে।
+
+## অন্যান্য ফিচার
+
+- সময়, তারিখ, ব্যাটারি
+- ভলিউম / মিউট
 - Wi-Fi, Bluetooth, Camera, Settings
-- YouTube / Google search
-- Weather (via Google)
-- Simple conversation & jokes
-- বাংলা + English support
+- YouTube / Google সার্চ
+- আবহাওয়া
+- সাধারণ কথোপকথন ও জোক
 
-## How to use
+## সেটআপ (গুরুত্বপূর্ণ)
 
-1. অ্যাপ খুলুন
-2. **Active JARVIS** বাটন চাপুন (বা অটোমেটিক চালু হবে)
-3. হোম স্ক্রিন থেকেও বলুন: **Hey JARVIS**
-4. কমান্ড দিন
+1. অ্যাপ ইনস্টল করুন
+2. **মাইক্রোফোন** অনুমতি দিন
+3. **Settings → Accessibility → JARVIS** চালু করুন (অ্যাপ বন্ধ করার জন্য)
+4. “Hey JARVIS চালু করুন” বাটন চাপুন
 
 ## Build
 
-Android Studio দিয়ে খুলুন এবং Run করুন।  
-GitHub Actions দিয়ে APKও বিল্ড হয়।
+Android Studio দিয়ে Run করুন। GitHub Actions দিয়ে APKও বিল্ড হয়।

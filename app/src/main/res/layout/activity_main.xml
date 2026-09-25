@@ -63,11 +63,29 @@
             android:orientation="vertical"
             android:background="@drawable/v4_card">
 
-            <ImageView
-                android:layout_width="92dp"
-                android:layout_height="92dp"
-                android:src="@drawable/ic_v4"
-                android:contentDescription="JARVIS voice control" />
+            <FrameLayout
+                android:layout_width="220dp"
+                android:layout_height="220dp"
+                android:layout_gravity="center">
+
+                <ImageView
+                    android:layout_width="220dp"
+                    android:layout_height="220dp"
+                    android:src="@drawable/jarvis_ring"
+                    android:alpha="0.28"
+                    android:contentDescription="JARVIS listening ring" />
+
+                <ImageView
+                    android:id="@+id/jarvisOrb"
+                    android:layout_width="170dp"
+                    android:layout_height="170dp"
+                    android:layout_gravity="center"
+                    android:background="@drawable/jarvis_orb"
+                    android:src="@drawable/ic_v4"
+                    android:padding="34dp"
+                    android:contentDescription="JARVIS voice assistant" />
+
+            </FrameLayout>
 
             <TextView
                 android:id="@+id/statusText"
@@ -75,7 +93,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
                 android:gravity="center"
-                android:text="JARVIS প্রস্তুত — আপনার কমান্ডের অপেক্ষায়"
+                android:text="JARVIS প্রস্তুত"
                 android:textColor="#F8FAFC"
                 android:textSize="19sp"
                 android:textStyle="bold" />
@@ -85,7 +103,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
                 android:gravity="center"
-                android:text="বলুন “Active JARVIS” তারপর যা করতে চান বলুন"
+                android:text="“Hello JARVIS” বলুন • তারপর আপনার কথা বলুন"
                 android:textColor="#94A3B8"
                 android:textSize="13sp" />
         </LinearLayout>

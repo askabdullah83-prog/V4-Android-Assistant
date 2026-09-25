@@ -40,7 +40,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Your Personal Voice Assistant"
+                    android:text="Siri-style Voice Assistant"
                     android:textColor="#94A3B8"
                     android:textSize="13sp" />
             </LinearLayout>
@@ -103,7 +103,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
                 android:gravity="center"
-                android:text="“Hello JARVIS” বলুন • তারপর আপনার কথা বলুন"
+                android:text="“Hey JARVIS” বলুন • তারপর আপনার কথা বলুন"
                 android:textColor="#94A3B8"
                 android:textSize="13sp" />
         </LinearLayout>
@@ -126,7 +126,7 @@
             android:layout_height="56dp"
             android:layout_marginTop="10dp"
             android:background="@drawable/v4_secondary"
-            android:text="🔊  Active JARVIS"
+            android:text="🔊  Hey JARVIS চালু করুন"
             android:textAllCaps="false"
             android:textColor="#E2E8F0"
             android:textSize="16sp"
@@ -152,7 +152,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="JARVIS দিয়ে ফোনে কাজ করুন"
+                android:text="Siri-এর মতো কমান্ড দিন"
                 android:textColor="#F8FAFC"
                 android:textSize="17sp"
                 android:textStyle="bold" />
@@ -161,7 +161,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:text="• “YouTube খোলো”&#10;• “Wi-Fi settings খোলো”&#10;• “Bluetooth চালু আছে?”&#10;• “ক্যামেরা খোলো”&#10;• “WhatsApp খোলো”&#10;• “কয়টা বাজে?”"
+                android:text="• “Hey JARVIS”&#10;• “কয়টা বাজে?”&#10;• “YouTube খোলো”&#10;• “WhatsApp খোলো”&#10;• “ব্যাটারি কত?”&#10;• “আবহাওয়া কেমন?”"
                 android:textColor="#CBD5E1"
                 android:textSize="14sp"
                 android:lineSpacingExtra="3dp" />
@@ -214,7 +214,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
             android:gravity="center"
-            android:text="JARVIS • বাংলা + English • Voice Control"
+            android:text="JARVIS • Hey JARVIS • Siri-style Voice Control"
             android:textColor="#64748B"
             android:textSize="12sp" />
 

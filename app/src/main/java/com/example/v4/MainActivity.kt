@@ -17,6 +17,10 @@ import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
 import android.widget.Button
 import android.widget.TextView
+import android.view.View
+import android.animation.ObjectAnimator
+import android.animation.AnimatorSet
+import android.view.animation.AccelerateDecelerateInterpolator
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -30,6 +34,8 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     private lateinit var wakeButton: Button
     private lateinit var languageButton: Button
     private lateinit var settingsButton: Button
+    private lateinit var jarvisOrb: View
+    private var orbAnimator: ObjectAnimator? = null
     private lateinit var tts: TextToSpeech
     private var recognizer: SpeechRecognizer? = null
     private var language = "bn-BD"
@@ -44,6 +50,8 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         wakeButton = findViewById(R.id.wakeButton)
         languageButton = findViewById(R.id.languageButton)
         settingsButton = findViewById(R.id.settingsButton)
+        jarvisOrb = findViewById(R.id.jarvisOrb)
+        startOrbAnimation()
         tts = TextToSpeech(this, this)
         listenButton.setOnClickListener { startListening() }
         wakeButton.setOnClickListener { toggleWakeService() }
@@ -55,6 +63,24 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         }
         requestNeededPermissions()
         startWakeServiceIfAllowed()
+    }
+
+    private fun startOrbAnimation() {
+        orbAnimator?.cancel()
+        orbAnimator = ObjectAnimator.ofFloat(jarvisOrb, View.SCALE_X, 0.94f, 1.06f).apply {
+            duration = 1200
+            repeatCount = ObjectAnimator.INFINITE
+            repeatMode = ObjectAnimator.REVERSE
+            interpolator = AccelerateDecelerateInterpolator()
+        }
+        orbAnimator?.start()
+        ObjectAnimator.ofFloat(jarvisOrb, View.ROTATION, -2f, 2f).apply {
+            duration = 2400
+            repeatCount = ObjectAnimator.INFINITE
+            repeatMode = ObjectAnimator.REVERSE
+            interpolator = AccelerateDecelerateInterpolator()
+            start()
+        }
     }
 
     private fun requestNeededPermissions() {
@@ -227,7 +253,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             command.contains("facebook") || command.contains("ফেসবুক") -> openApp("com.facebook.katana", "Facebook")
             command.contains("chrome") || command.contains("ক্রোম") -> openApp("com.android.chrome", "Chrome")
             command.contains("কল") || command.contains("ফোন কর") || command.contains("call") -> { speak(if (language == "bn-BD") "কল করার জন্য ডায়ালার খুলছি" else "Opening the dialer"); startActivity(Intent(Intent.ACTION_DIAL)) }
-            command.contains("হ্যালো") || command.contains("হাই") || command.contains("hello") || command.contains("hi") -> speak(if (language == "bn-BD") "হ্যালো! আমি JARVIS। কী করতে পারি?" else "Hello! I am JARVIS. How can I help?")
+            command.contains("হ্যালো") || command.contains("হাই") || command.contains("hello") || command.contains("hi") -> speak(if (language == "bn-BD") "হ্যালো! আমি জার্ভিস। কী করতে পারি?" else "Hello! I am Jarvis. How can I help?")
             command.contains("তোমার নাম") || command.contains("নাম কি") || command.contains("নাম কী") || command.contains("your name") -> speak(if (language == "bn-BD") "আমার নাম V4" else "My name is JARVIS")
             command.contains("কেমন আছ") || command.contains("কেমন আছেন") || command.contains("how are you") -> speak(if (language == "bn-BD") "আমি ভালো আছি। ধন্যবাদ!" else "I am fine. Thank you!")
             command.contains("ধন্যবাদ") || command.contains("thank you") || command.contains("thanks") -> speak(if (language == "bn-BD") "আপনাকেও ধন্যবাদ" else "You are welcome")
@@ -270,5 +296,5 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         }
     }
 
-    override fun onDestroy() { recognizer?.destroy(); tts.stop(); tts.shutdown(); super.onDestroy() }
+    override fun onDestroy() { orbAnimator?.cancel(); recognizer?.destroy(); tts.stop(); tts.shutdown(); super.onDestroy() }
 }

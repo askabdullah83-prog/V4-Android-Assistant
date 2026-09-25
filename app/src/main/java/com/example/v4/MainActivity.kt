@@ -1,35 +1,31 @@
 package com.example.v4
 
 import android.Manifest
-import android.bluetooth.BluetoothAdapter
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.net.Uri
-import android.os.BatteryManager
 import android.os.Build
 import android.os.Bundle
-import android.provider.AlarmClock
 import android.provider.Settings
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
+import android.speech.tts.Voice
+import android.view.View
+import android.view.animation.AccelerateDecelerateInterpolator
 import android.widget.Button
 import android.widget.TextView
-import android.view.View
 import android.animation.ObjectAnimator
-import android.animation.AnimatorSet
-import android.view.animation.AccelerateDecelerateInterpolator
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import java.text.SimpleDateFormat
-import java.util.Date
 import java.util.Locale
 
 class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
+
     private lateinit var statusText: TextView
+    private lateinit var statusPill: TextView
     private lateinit var listenButton: Button
     private lateinit var wakeButton: Button
     private lateinit var languageButton: Button
@@ -45,37 +41,54 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
         statusText = findViewById(R.id.statusText)
+        statusPill = findViewById(R.id.statusPill)
         listenButton = findViewById(R.id.listenButton)
         wakeButton = findViewById(R.id.wakeButton)
         languageButton = findViewById(R.id.languageButton)
         settingsButton = findViewById(R.id.settingsButton)
         jarvisOrb = findViewById(R.id.jarvisOrb)
+
         startOrbAnimation()
         tts = TextToSpeech(this, this)
+
         listenButton.setOnClickListener { startListening() }
         wakeButton.setOnClickListener { toggleWakeService() }
-        settingsButton.setOnClickListener { startActivity(Intent(Settings.ACTION_SETTINGS)) }
+        settingsButton.setOnClickListener {
+            startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+        }
         languageButton.setOnClickListener {
             language = if (language == "bn-BD") "en-US" else "bn-BD"
             statusText.text = if (language == "bn-BD") "বাংলা মোড" else "English mode"
+            applyFemaleVoice()
             speak(if (language == "bn-BD") "বাংলা ভাষা চালু হয়েছে" else "English language enabled")
         }
+
         requestNeededPermissions()
         startWakeServiceIfAllowed()
     }
 
     private fun startOrbAnimation() {
         orbAnimator?.cancel()
-        orbAnimator = ObjectAnimator.ofFloat(jarvisOrb, View.SCALE_X, 0.94f, 1.06f).apply {
-            duration = 1200
+        // Scale pulse
+        ObjectAnimator.ofFloat(jarvisOrb, View.SCALE_X, 0.92f, 1.08f).apply {
+            duration = 1800
             repeatCount = ObjectAnimator.INFINITE
             repeatMode = ObjectAnimator.REVERSE
             interpolator = AccelerateDecelerateInterpolator()
+            start()
         }
-        orbAnimator?.start()
-        ObjectAnimator.ofFloat(jarvisOrb, View.ROTATION, -2f, 2f).apply {
-            duration = 2400
+        ObjectAnimator.ofFloat(jarvisOrb, View.SCALE_Y, 0.92f, 1.08f).apply {
+            duration = 1800
+            repeatCount = ObjectAnimator.INFINITE
+            repeatMode = ObjectAnimator.REVERSE
+            interpolator = AccelerateDecelerateInterpolator()
+            start()
+        }
+        // Soft alpha breathe
+        ObjectAnimator.ofFloat(jarvisOrb, View.ALPHA, 0.75f, 1f).apply {
+            duration = 2200
             repeatCount = ObjectAnimator.INFINITE
             repeatMode = ObjectAnimator.REVERSE
             interpolator = AccelerateDecelerateInterpolator()
@@ -86,8 +99,9 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     private fun requestNeededPermissions() {
         val permissions = mutableListOf(Manifest.permission.RECORD_AUDIO)
         if (Build.VERSION.SDK_INT >= 33) permissions.add(Manifest.permission.POST_NOTIFICATIONS)
-        if (Build.VERSION.SDK_INT >= 31) permissions.add(Manifest.permission.BLUETOOTH_CONNECT)
-        val missing = permissions.filter { ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED }
+        val missing = permissions.filter {
+            ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
+        }
         if (missing.isNotEmpty()) {
             ActivityCompat.requestPermissions(this, missing.toTypedArray(), 10)
         } else {
@@ -96,17 +110,20 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     }
 
     private fun startWakeServiceIfAllowed() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) return
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
+            != PackageManager.PERMISSION_GRANTED) return
         try {
             ContextCompat.startForegroundService(
                 this,
                 Intent(this, V4VoiceService::class.java).apply { action = V4VoiceService.ACTION_START }
             )
             wakeRunning = true
-            wakeButton.text = "⏹️ Active JARVIS বন্ধ করুন"
-            statusText.text = "Active JARVIS চালু — Home Screen বা অন্য App থেকেও বলুন"
+            wakeButton.text = "⏹  বন্ধ করুন"
+            statusPill.text = "● Listening"
+            statusText.text = "Hey JARVIS বলুন"
         } catch (_: Exception) {
-            statusText.text = "Active JARVIS চালু করা যায়নি"
+            statusText.text = "চালু করা যায়নি"
+            statusPill.text = "● Offline"
         }
     }
 
@@ -132,20 +149,32 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         if (wakeRunning) {
             stopService(Intent(this, V4VoiceService::class.java))
             wakeRunning = false
-            wakeButton.text = "🔊 Active JARVIS চালু করুন"
-            statusText.text = "Active JARVIS বন্ধ"
+            wakeButton.text = "🔊  Hey JARVIS চালু"
+            statusPill.text = "● Off"
+            statusText.text = "বন্ধ আছে"
         } else {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) { requestNeededPermissions(); return }
-            ContextCompat.startForegroundService(this, Intent(this, V4VoiceService::class.java).apply { action = V4VoiceService.ACTION_START })
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
+                != PackageManager.PERMISSION_GRANTED
+            ) {
+                requestNeededPermissions()
+                return
+            }
+            ContextCompat.startForegroundService(
+                this,
+                Intent(this, V4VoiceService::class.java).apply { action = V4VoiceService.ACTION_START }
+            )
             wakeRunning = true
-            wakeButton.text = "⏹️ Active JARVIS বন্ধ করুন"
-            statusText.text = "Active JARVIS চালু — Home Screen বা অন্য App থেকেও বলুন"
-            speak(if (language == "bn-BD") "Active JARVIS চালু করেছি" else "Active JARVIS is on")
+            wakeButton.text = "⏹  বন্ধ করুন"
+            statusPill.text = "● Listening"
+            statusText.text = "Hey JARVIS বলুন"
+            speak(if (language == "bn-BD") "JARVIS চালু করেছি" else "JARVIS is on")
         }
     }
 
     private fun startListening() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
+            != PackageManager.PERMISSION_GRANTED
+        ) {
             requestNeededPermissions()
             return
         }
@@ -158,15 +187,13 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             putExtra(RecognizerIntent.EXTRA_PROMPT, if (language == "bn-BD") "বলুন..." else "Speak...")
         }
 
-        // Some phones have Google's voice input Activity but do not expose a
-        // SpeechRecognizer service. Use the Activity fallback in that case.
         if (!SpeechRecognizer.isRecognitionAvailable(this)) {
             try {
-                statusText.text = "ভয়েস ইনপুট খুলছি..."
+                statusText.text = "ভয়েস ইনপুট..."
                 startActivityForResult(intent, speechRequestCode)
             } catch (_: ActivityNotFoundException) {
-                statusText.text = "কোনো Speech Recognition service পাওয়া যায়নি"
-                speak(if (language == "bn-BD") "এই ফোনে স্পিচ রিকগনিশন সার্ভিস পাওয়া যাচ্ছে না" else "No speech recognition service is available on this phone")
+                statusText.text = "স্পিচ সার্ভিস নেই"
+                speak(if (language == "bn-BD") "স্পিচ রিকগনিশন পাওয়া যাচ্ছে না" else "No speech recognition")
             }
             return
         }
@@ -181,19 +208,16 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             override fun onEndOfSpeech() { statusText.text = "প্রসেস করছি..." }
             override fun onError(error: Int) {
                 statusText.text = when (error) {
-                    SpeechRecognizer.ERROR_AUDIO -> "অডিও সমস্যা"
-                    SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS -> "মাইক্রোফোন অনুমতি নেই"
+                    SpeechRecognizer.ERROR_NO_MATCH -> "বোঝা যায়নি, আবার বলুন"
+                    SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> "কিছু শোনা যায়নি"
                     SpeechRecognizer.ERROR_NETWORK, SpeechRecognizer.ERROR_NETWORK_TIMEOUT -> "নেটওয়ার্ক সমস্যা"
-                    SpeechRecognizer.ERROR_NO_MATCH -> "কথা বোঝা যায়নি, আবার বলুন"
-                    SpeechRecognizer.ERROR_RECOGNIZER_BUSY -> "স্পিচ সার্ভিস ব্যস্ত"
-                    SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> "কোনো কথা শোনা যায়নি"
-                    else -> "স্পিচ সমস্যা ($error)"
+                    else -> "আবার চেষ্টা করুন"
                 }
             }
             override fun onResults(results: Bundle?) {
-                val text = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull().orEmpty()
+                val text = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
+                    ?.firstOrNull().orEmpty()
                 statusText.text = text.ifBlank { "কিছু শোনা যায়নি" }
-                if (text.isNotBlank()) handleCommand(text.trim())
             }
             override fun onPartialResults(partialResults: Bundle?) {}
             override fun onEvent(eventType: Int, params: Bundle?) {}
@@ -203,98 +227,60 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         recognizer?.startListening(intent)
     }
 
-    @Deprecated("Use Activity Result APIs in new code; kept for Android compatibility.")
+    @Deprecated("Kept for compatibility")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode != speechRequestCode || resultCode != RESULT_OK) return
         val text = data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)?.firstOrNull().orEmpty()
         statusText.text = text.ifBlank { "কিছু শোনা যায়নি" }
-        if (text.isNotBlank()) handleCommand(text.trim())
     }
 
-    private fun handleCommand(originalCommand: String) {
-        val command = originalCommand.lowercase(Locale.getDefault()).trim()
-        when {
-            command.contains("সময়") || command.contains("সময়") || command.contains("কয়টা বাজে") || command.contains("কয়টা বাজে") || command.contains("ঘড়ি") || command.contains("ঘড়ি") || command.contains("time") -> {
-                val now = SimpleDateFormat("hh:mm a", Locale.getDefault()).format(Date())
-                speak(if (language == "bn-BD") "এখন সময় $now" else "The time is $now")
-            }
-            command.contains("তারিখ") || command.contains("আজ কত তারিখ") || command.contains("আজকের তারিখ") || command.contains("date") || command.contains("today") -> {
-                val today = SimpleDateFormat("dd MMMM yyyy", Locale.getDefault()).format(Date())
-                speak(if (language == "bn-BD") "আজ $today" else "Today is $today")
-            }
-            command.contains("ব্যাটারি") || command.contains("battery") -> {
-                val level = (getSystemService(BATTERY_SERVICE) as BatteryManager).getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
-                speak(if (language == "bn-BD") "ব্যাটারি $level শতাংশ" else "Battery is $level percent")
-            }
-            command.contains("ব্লুটুথ") || command.contains("bluetooth") -> {
-                val enabled = try { BluetoothAdapter.getDefaultAdapter()?.isEnabled == true } catch (_: SecurityException) { false }
-                speak(if (language == "bn-BD") if (enabled) "ব্লুটুথ চালু আছে" else "ব্লুটুথ বন্ধ আছে" else if (enabled) "Bluetooth is on" else "Bluetooth is off")
-            }
-            command.contains("ওয়াইফাই") || command.contains("ওয়াইফাই") || command.contains("wifi") -> {
-                speak(if (language == "bn-BD") "ওয়াইফাই সেটিংস খুলছি" else "Opening Wi-Fi settings")
-                startActivity(Intent(Settings.ACTION_WIFI_SETTINGS))
-            }
-            command.contains("alarm") || command.contains("অ্যালার্ম") || command.contains("এলার্ম") -> {
-                speak(if (language == "bn-BD") "অ্যালার্ম সেট করার স্ক্রিন খুলছি" else "Opening alarm setup")
-                startActivity(Intent(AlarmClock.ACTION_SET_ALARM))
-            }
-            command.contains("reminder") || command.contains("রিমাইন্ডার") || command.contains("মনে করিয়ে") -> {
-                speak(if (language == "bn-BD") "ক্যালেন্ডার খুলছি" else "Opening calendar")
-                startActivity(Intent(Intent.ACTION_INSERT).apply { data = Uri.parse("content://com.android.calendar/events") })
-            }
-            command.contains("youtube") || command.contains("ইউটিউব") -> openUrl("https://www.youtube.com", "ইউটিউব খুলছি", "Opening YouTube")
-            command.contains("google") || command.contains("গুগল") -> openUrl("https://www.google.com", "গুগল খুলছি", "Opening Google")
-            command.contains("গান") || command.contains("music") || command.contains("মিউজিক") -> openSearch(originalCommand, "গান খুঁজে দিচ্ছি", "Searching music on YouTube")
-            command.contains("ভিডিও") || command.contains("video") -> openSearch(originalCommand, "ভিডিও খুঁজে দিচ্ছি", "Searching videos on YouTube")
-            command.contains("ক্যামেরা") || command.contains("camera") -> { speak(if (language == "bn-BD") "ক্যামেরা খুলছি" else "Opening camera"); startActivity(Intent("android.media.action.IMAGE_CAPTURE")) }
-            command.contains("সেটিংস") || command.contains("settings") -> startActivity(Intent(Settings.ACTION_SETTINGS))
-            command.contains("whatsapp") || command.contains("হোয়াটসঅ্যাপ") || command.contains("হোয়াটসঅ্যাপ") -> openApp("com.whatsapp", "WhatsApp")
-            command.contains("facebook") || command.contains("ফেসবুক") -> openApp("com.facebook.katana", "Facebook")
-            command.contains("chrome") || command.contains("ক্রোম") -> openApp("com.android.chrome", "Chrome")
-            command.contains("কল") || command.contains("ফোন কর") || command.contains("call") -> { speak(if (language == "bn-BD") "কল করার জন্য ডায়ালার খুলছি" else "Opening the dialer"); startActivity(Intent(Intent.ACTION_DIAL)) }
-            command.contains("হ্যালো") || command.contains("হাই") || command.contains("hello") || command.contains("hi") -> speak(if (language == "bn-BD") "হ্যালো! আমি জার্ভিস। কী করতে পারি?" else "Hello! I am Jarvis. How can I help?")
-            command.contains("তোমার নাম") || command.contains("নাম কি") || command.contains("নাম কী") || command.contains("your name") -> speak(if (language == "bn-BD") "আমার নাম জার্ভিস" else "My name is JARVIS")
-            command.contains("কেমন আছ") || command.contains("কেমন আছেন") || command.contains("how are you") -> speak(if (language == "bn-BD") "আমি ভালো আছি। ধন্যবাদ!" else "I am fine. Thank you!")
-            command.contains("ধন্যবাদ") || command.contains("thank you") || command.contains("thanks") -> speak(if (language == "bn-BD") "আপনাকেও ধন্যবাদ" else "You are welcome")
-            else -> speak(if (language == "bn-BD") "দুঃখিত, এই কমান্ডটি এখনো বুঝতে পারিনি।" else "Sorry, I do not understand that command yet.")
-        }
-    }
+    /** Force a female TTS voice whenever possible. */
+    private fun applyFemaleVoice() {
+        try {
+            val targetLang = if (language == "bn-BD") Locale("bn", "BD") else Locale.US
+            tts.language = targetLang
 
-    private fun openUrl(url: String, bn: String, en: String) {
-        speak(if (language == "bn-BD") bn else en)
-        startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
-    }
+            val voices = tts.voices ?: return
+            val femaleKeywords = listOf("female", "woman", "girl", "fem", "fema")
 
-    private fun openGoogleSearch(query: String) {
-        speak(if (language == "bn-BD") "এই বিষয়ে গুগলে খুঁজে দিচ্ছি" else "I will search Google for that")
-        val url = "https://www.google.com/search?q=" + Uri.encode(query)
-        startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
-    }
+            // 1) Same language + female
+            val femaleSameLang = voices.firstOrNull { v ->
+                v.locale.language == targetLang.language &&
+                    femaleKeywords.any { k -> v.name.contains(k, true) }
+            }
+            // 2) Any female
+            val femaleAny = voices.firstOrNull { v ->
+                femaleKeywords.any { k -> v.name.contains(k, true) }
+            }
+            // 3) Prefer higher quality
+            val best = femaleSameLang ?: femaleAny
+            if (best != null) {
+                tts.voice = best
+            }
 
-    private fun openSearch(query: String, bn: String, en: String) {
-        speak(if (language == "bn-BD") bn else en)
-        val url = "https://www.youtube.com/results?search_query=" + Uri.encode(query)
-        startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
-    }
-
-    private fun openApp(packageName: String, name: String) {
-        val intent = packageManager.getLaunchIntentForPackage(packageName)
-        if (intent != null) { speak(if (language == "bn-BD") "$name খুলছি" else "Opening $name"); startActivity(intent) }
-        else speak(if (language == "bn-BD") "$name ফোনে ইনস্টল নেই" else "$name is not installed")
+            // Slightly higher pitch for feminine feel if only one voice available
+            tts.setPitch(1.08f)
+            tts.setSpeechRate(0.95f)
+        } catch (_: Exception) {}
     }
 
     private fun speak(text: String) {
-        tts.language = if (language == "bn-BD") Locale("bn", "BD") else Locale.US
+        applyFemaleVoice()
         tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, "JARVIS_REPLY")
     }
 
     override fun onInit(status: Int) {
         if (status == TextToSpeech.SUCCESS) {
-            tts.language = Locale("bn", "BD")
-            tts.voices?.firstOrNull { it.locale.language == "bn" && it.name.contains("female", true) }?.let { tts.voice = it }
+            applyFemaleVoice()
         }
     }
 
-    override fun onDestroy() { orbAnimator?.cancel(); recognizer?.destroy(); tts.stop(); tts.shutdown(); super.onDestroy() }
+    override fun onDestroy() {
+        orbAnimator?.cancel()
+        recognizer?.destroy()
+        tts.stop()
+        tts.shutdown()
+        super.onDestroy()
+    }
 }

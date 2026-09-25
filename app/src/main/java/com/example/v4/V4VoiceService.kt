@@ -434,12 +434,12 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
             command.contains("joke") || command.contains("জোক") || command.contains("মজার") || command.contains("হাসানো") ->
                 speakSiri(listOf("কম্পিউটার কেন ঠান্ডা থাকে? কারণ সেদের অনেক উইন্ডোজ খোলা থাকে!", "প্রোগ্রামার কেন রাতে ঘুমায় না? কারণ বাগে ভয় পায়।", "মোবাইল ফোন কেন স্মার্ট? কারণ সে কখনো ভুলে যায় না কাকে কল করতে হবে।").random())
             command.contains("সাহায্য") || command.contains("help") || command.contains("কী কী করতে পার") || command.contains("what can you do") ->
-                speakSiri("আমি ফোনের যেকোনো অ্যাপ নাম ধরে খুলতে পারি। বন্ধ করতে, হোমে যেতে, ভলিউম নিয়ন্ত্রণ করতে, সময় তারিখ ব্যাটারি বলতে, এবং গুগল সার্চ করতে পারি। শুধু বলুন — Hey JARVIS।")
+                speakSiri("আমি ফোনের যেকোনো অ্যাপ নাম ধরে খুলতে পারি। বন্ধ করতে, হোমে যেতে, ভলিউম নিয়ন্ত্রণ করতে, সময় তারিখ ব্যাটারি বলতে পারি। গুগলে সার্চ করতে চাইলে স্পষ্ট করে বলুন। শুধু বলুন — Hey JARVIS।")
             else -> {
-                if (openAppByName(command)) { /* opened */ }
-                else if (command.length > 2)
-                    openUrl("https://www.google.com/search?q=" + Uri.encode(original.trim()), "এই বিষয়ে গুগলে খুঁজে দিচ্ছি")
-                else speakSiri("দুঃখিত, এটা এখনো বুঝতে পারিনি। অন্যভাবে বলবেন?")
+                // শুধু অ্যাপ খোলার চেষ্টা — গুগল সার্চ শুধু স্পষ্ট কমান্ডে
+                if (!openAppByName(command)) {
+                    speakSiri("দুঃখিত, এটা বুঝতে পারিনি। অন্যভাবে বলবেন?")
+                }
             }
         }
         handler.postDelayed({ startRecognition() }, 1400)

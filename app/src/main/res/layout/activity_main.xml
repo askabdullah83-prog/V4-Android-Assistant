@@ -1,222 +1,179 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/v4_bg"
-    android:fillViewport="true">
+    android:background="@drawable/v4_bg">
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:orientation="vertical"
-        android:padding="18dp">
+        android:paddingStart="24dp"
+        android:paddingEnd="24dp"
+        android:paddingTop="48dp"
+        android:paddingBottom="32dp">
 
+        <!-- Top bar -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center_vertical">
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
-            <ImageView
-                android:layout_width="58dp"
-                android:layout_height="58dp"
-                android:src="@drawable/ic_v4"
-                android:contentDescription="JARVIS icon" />
-
-            <LinearLayout
+            <TextView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginStart="13dp"
-                android:orientation="vertical">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="JARVIS"
-                    android:textColor="#F8FAFC"
-                    android:textSize="29sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Siri-style Voice Assistant"
-                    android:textColor="#94A3B8"
-                    android:textSize="13sp" />
-            </LinearLayout>
+                android:text="JARVIS"
+                android:textColor="#F5F3FF"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.12" />
 
             <TextView
+                android:id="@+id/statusPill"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="● ON"
-                android:textColor="#38BDF8"
+                android:background="@drawable/v4_secondary"
+                android:paddingStart="14dp"
+                android:paddingEnd="14dp"
+                android:paddingTop="6dp"
+                android:paddingBottom="6dp"
+                android:text="● Listening"
+                android:textColor="#C4B5FD"
                 android:textSize="12sp"
                 android:textStyle="bold" />
         </LinearLayout>
 
-        <LinearLayout
+        <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="18dp"
-            android:padding="20dp"
+            android:layout_marginTop="4dp"
+            android:text="Your personal voice assistant"
+            android:textColor="#6B7280"
+            android:textSize="13sp" />
+
+        <!-- Spacer -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <!-- Center orb -->
+        <FrameLayout
+            android:layout_width="240dp"
+            android:layout_height="240dp"
+            android:layout_gravity="center_horizontal">
+
+            <ImageView
+                android:layout_width="240dp"
+                android:layout_height="240dp"
+                android:src="@drawable/jarvis_ring"
+                android:alpha="0.5"
+                android:contentDescription="ring" />
+
+            <ImageView
+                android:id="@+id/jarvisOrb"
+                android:layout_width="180dp"
+                android:layout_height="180dp"
+                android:layout_gravity="center"
+                android:background="@drawable/jarvis_orb"
+                android:src="@drawable/ic_v4"
+                android:padding="42dp"
+                android:contentDescription="JARVIS" />
+        </FrameLayout>
+
+        <TextView
+            android:id="@+id/statusText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="28dp"
             android:gravity="center"
-            android:orientation="vertical"
-            android:background="@drawable/v4_card">
+            android:text="Hey JARVIS বলুন"
+            android:textColor="#F5F3FF"
+            android:textSize="20sp"
+            android:textStyle="bold" />
 
-            <FrameLayout
-                android:layout_width="220dp"
-                android:layout_height="220dp"
-                android:layout_gravity="center">
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:gravity="center"
+            android:text="মেয়ে কণ্ঠ • বাংলা + English"
+            android:textColor="#7C6FA0"
+            android:textSize="13sp" />
 
-                <ImageView
-                    android:layout_width="220dp"
-                    android:layout_height="220dp"
-                    android:src="@drawable/jarvis_ring"
-                    android:alpha="0.28"
-                    android:contentDescription="JARVIS listening ring" />
+        <!-- Spacer -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
 
-                <ImageView
-                    android:id="@+id/jarvisOrb"
-                    android:layout_width="170dp"
-                    android:layout_height="170dp"
-                    android:layout_gravity="center"
-                    android:background="@drawable/jarvis_orb"
-                    android:src="@drawable/ic_v4"
-                    android:padding="34dp"
-                    android:contentDescription="JARVIS voice assistant" />
-
-            </FrameLayout>
-
-            <TextView
-                android:id="@+id/statusText"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:gravity="center"
-                android:text="JARVIS প্রস্তুত"
-                android:textColor="#F8FAFC"
-                android:textSize="19sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:gravity="center"
-                android:text="“Hey JARVIS” বলুন • তারপর আপনার কথা বলুন"
-                android:textColor="#94A3B8"
-                android:textSize="13sp" />
-        </LinearLayout>
-
+        <!-- Primary listen button -->
         <Button
             android:id="@+id/listenButton"
             android:layout_width="match_parent"
-            android:layout_height="62dp"
-            android:layout_marginTop="14dp"
+            android:layout_height="60dp"
             android:background="@drawable/v4_primary"
             android:text="🎙  কথা বলুন"
             android:textAllCaps="false"
             android:textColor="#FFFFFF"
-            android:textSize="18sp"
-            android:textStyle="bold" />
+            android:textSize="17sp"
+            android:textStyle="bold"
+            android:elevation="0dp"
+            android:stateListAnimator="@null" />
 
+        <!-- Wake toggle -->
         <Button
             android:id="@+id/wakeButton"
             android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:layout_marginTop="10dp"
+            android:layout_height="54dp"
+            android:layout_marginTop="12dp"
             android:background="@drawable/v4_secondary"
-            android:text="🔊  Hey JARVIS চালু করুন"
+            android:text="🔊  Hey JARVIS চালু"
             android:textAllCaps="false"
-            android:textColor="#E2E8F0"
-            android:textSize="16sp"
-            android:textStyle="bold" />
+            android:textColor="#E9D5FF"
+            android:textSize="15sp"
+            android:elevation="0dp"
+            android:stateListAnimator="@null" />
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="22dp"
-            android:text="PHONE CONTROL"
-            android:textColor="#38BDF8"
-            android:textSize="12sp"
-            android:textStyle="bold" />
-
+        <!-- Bottom row -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:padding="16dp"
-            android:orientation="vertical"
-            android:background="@drawable/v4_card">
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Siri-এর মতো কমান্ড দিন"
-                android:textColor="#F8FAFC"
-                android:textSize="17sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="• “Hey JARVIS”&#10;• “কয়টা বাজে?”&#10;• “YouTube খোলো”&#10;• “WhatsApp খোলো”&#10;• “ব্যাটারি কত?”&#10;• “আবহাওয়া কেমন?”"
-                android:textColor="#CBD5E1"
-                android:textSize="14sp"
-                android:lineSpacingExtra="3dp" />
-        </LinearLayout>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="22dp"
-            android:text="QUICK SETTINGS"
-            android:textColor="#64748B"
-            android:textSize="12sp"
-            android:textStyle="bold" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="16dp"
             android:orientation="horizontal">
 
             <Button
                 android:id="@+id/languageButton"
                 android:layout_width="0dp"
-                android:layout_height="54dp"
+                android:layout_height="48dp"
                 android:layout_weight="1"
                 android:background="@drawable/v4_secondary"
-                android:text="🌐  বাংলা / English"
+                android:text="🌐  ভাষা"
                 android:textAllCaps="false"
-                android:textColor="#E2E8F0"
-                android:textSize="13sp" />
+                android:textColor="#C4B5FD"
+                android:textSize="13sp"
+                android:elevation="0dp"
+                android:stateListAnimator="@null" />
 
             <Space
-                android:layout_width="9dp"
+                android:layout_width="12dp"
                 android:layout_height="1dp" />
 
             <Button
                 android:id="@+id/settingsButton"
                 android:layout_width="0dp"
-                android:layout_height="54dp"
+                android:layout_height="48dp"
                 android:layout_weight="1"
                 android:background="@drawable/v4_secondary"
-                android:text="⚙  Settings"
+                android:text="⚙  সেটিংস"
                 android:textAllCaps="false"
-                android:textColor="#E2E8F0"
-                android:textSize="13sp" />
+                android:textColor="#C4B5FD"
+                android:textSize="13sp"
+                android:elevation="0dp"
+                android:stateListAnimator="@null" />
         </LinearLayout>
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:gravity="center"
-            android:text="JARVIS • Hey JARVIS • Siri-style Voice Control"
-            android:textColor="#64748B"
-            android:textSize="12sp" />
-
     </LinearLayout>
-</ScrollView>
+</FrameLayout>

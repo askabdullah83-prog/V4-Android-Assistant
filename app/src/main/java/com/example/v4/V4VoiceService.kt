@@ -132,6 +132,7 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
         try {
             recognitionRunning = true
             wakeDetectedInPartial = false
+            listeningForWake = true
             recognizer?.startListening(intent)
         } catch (_: Exception) {
             recognitionRunning = false
@@ -148,6 +149,7 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
         }
 
         if (isWakePhrase(command)) {
+            listeningForWake = false
             val remaining = removeWakePhrase(command)
             if (remaining.isNotBlank()) {
                 executeCommand(remaining)
@@ -179,7 +181,7 @@ class V4VoiceService : Service(), TextToSpeech.OnInitListener {
             .replace("active be four", "active jarvis")
             .replace("active b4", "active jarvis")
             .replace("active v", "active jarvis")
-            .replace(Regex("\\\\s+"), " ")
+            .replace(Regex("\\s+"), " ")
             .trim()
     }
 

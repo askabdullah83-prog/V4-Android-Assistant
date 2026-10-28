@@ -1,43 +1,16 @@
-# JARVIS — Siri-style Android Voice Assistant
+# JARVIS — Fresh Android Assistant
 
-বাংলা + English ভয়েস অ্যাসিস্ট্যান্ট। ফোনের **সব অ্যাপ** নাম ধরে খোলা ও বন্ধ করা যায়।
+Native Kotlin starter for a Bengali + English Android voice assistant with a futuristic interface.
 
-## Wake Word
+## Features
+- SpeechRecognizer voice input and TextToSpeech responses
+- Bengali/English language toggle
+- Commands for time, date, battery, settings, camera, web search, and opening launchable apps by name
+- GitHub Actions workflow to build an installable debug APK
 
-- **Hey JARVIS**
-- **হ্যালো জার্ভিস**
-- **ওহে জার্ভিস**
-- **Active JARVIS**
+## Build APK
+1. Open the Actions tab.
+2. Select **Build JARVIS APK** and click **Run workflow** on branch `jarvis-fresh`.
+3. When the run succeeds, download the `JARVIS-debug-apk` artifact ZIP and extract the APK.
 
-## অ্যাপ খোলা / বন্ধ করা
-
-যেকোনো ইনস্টল করা অ্যাপের নাম বলুন:
-
-- “WhatsApp খোলো”
-- “Facebook খোলো”
-- “Pathao খোলো”
-- “imo খোলো”
-- “অ্যাপ বন্ধ করো” / “বন্ধ করো” → বর্তমান অ্যাপ বন্ধ (হোমে যায়)
-- “পেছনে যাও” / “Back”
-
-JARVIS ফোনে থাকা **সব লঞ্চার অ্যাপ** স্ক্যান করে নাম ম্যাচ করে খোলে।
-
-## অন্যান্য ফিচার
-
-- সময়, তারিখ, ব্যাটারি
-- ভলিউম / মিউট
-- Wi-Fi, Bluetooth, Camera, Settings
-- YouTube / Google সার্চ
-- আবহাওয়া
-- সাধারণ কথোপকথন ও জোক
-
-## সেটআপ (গুরুত্বপূর্ণ)
-
-1. অ্যাপ ইনস্টল করুন
-2. **মাইক্রোফোন** অনুমতি দিন
-3. **Settings → Accessibility → JARVIS** চালু করুন (অ্যাপ বন্ধ করার জন্য)
-4. “Hey JARVIS চালু করুন” বাটন চাপুন
-
-## Build
-
-Android Studio দিয়ে Run করুন। GitHub Actions দিয়ে APKও বিল্ড হয়।
+Microphone permission is required. Speech recognition availability depends on the phone's installed speech service. This is a functional starter, not a full Siri clone. Always-on wake-word listening and AI/image generation are not included; AI services need a secure backend and provider API key.
